@@ -93,11 +93,11 @@ JMP address
             </thead>
             <tbody>
                 <tr>
-                    <td>JC</td>
+                    <td>JO</td>
                     <td>Jump if overflow</td>
                 </tr>
                 <tr>
-                    <td>JNC</td>
+                    <td>JNO</td>
                     <td>Jump if no overflow</td>
                 </tr>
                 <tr>
@@ -110,6 +110,43 @@ JMP address
                 </tr>
             </tbody>
         </table>
+        <b>Print Command</b>
+        <p>Prints a string or an integer.</p>
+<pre>
+PRINTS address
+PRINTD address
+</pre>
+<b>Code Example:</b>
+<pre>
+char i = 100;
+char j = 30;
+char k = 0;
+k = i - j;
+printf("%d", k);
+</pre>
+
+<b>in pseudo language:</b>
+<pre>
+i: db 100 //char I = 100;
+j: db 30  //char j = 30;
+k: db 0   //char k = 0;
+cp [k], [i]	//k = I;
+sub [k], [j]	//k -= j;
+printd [k]	//printf(“%d”, k);
+</pre>
+
+<b>loop example:</b>
+<pre>
+for (char i = 0; i < 50; ++i);
+</pre>
+<pre>
+i: db 0			//char I = 0;
+loop: cmp [i], 50	//check I against 50
+jz end			//goto end if i==50
+inc [i]			//i++
+jp loop			//goto loop
+end:
+</pre>
         <hr style="margin-bottom:10px;"/>
         <p><small>by Konstantin Zheludev (2019)</small></p>
     </div>

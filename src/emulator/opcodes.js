@@ -14,7 +14,9 @@ app.service('opcodes', [function() {
         JC_ADDRESS: 11,
         JNC_ADDRESS: 12,
         JZ_ADDRESS: 13,
-        JNZ_ADDRESS: 14
+        JNZ_ADDRESS: 14,
+        PRINT_STRING: 15,
+        PRINT_DECIMAL: 16
     };
 
     return opcodes;
