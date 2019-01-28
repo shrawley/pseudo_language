@@ -72,9 +72,10 @@ INC address
 DEC address
 </pre>
         <h4>CMP - Compare</h4>
-        <p>Compares two values by subtracting value at address2 from value stored at address1, the result is not stored, negative values will cause an overflow. Use this instruction before a conditional jump.</p>
+        <p>Compares two values by subtracting value at address2 or a constant from value stored at address1, the result is not stored, negative values will cause an overflow. Use this instruction before a conditional jump.</p>
 <pre>
 CMP address1, address2
+CMP address, constant
 </pre>
         <h4>Jumps</h4>
         <b>JMP - Unconditional jump</b>
@@ -102,11 +103,11 @@ JMP address
                 </tr>
                 <tr>
                     <td>JZ</td>
-                    <td>Jump if zero</td>
+                    <td>Jump if zero or equal</td>
                 </tr>
                 <tr>
                     <td>JNZ</td>
-                    <td>Jump if no zero</td>
+                    <td>Jump if no zero or not equal</td>
                 </tr>
             </tbody>
         </table>

@@ -10,13 +10,14 @@ app.service('opcodes', [function() {
         INC_ADDRESS: 7,
         DEC_ADDRESS: 8,
         CMP_ADDRESS_WITH_ADDRESS: 9,
-        JMP_ADDRESS: 10,
-        JC_ADDRESS: 11,
-        JNC_ADDRESS: 12,
-        JZ_ADDRESS: 13,
-        JNZ_ADDRESS: 14,
-        PRINT_STRING: 15,
-        PRINT_DECIMAL: 16
+        CMP_NUMBER_WITH_ADDRESS: 10,
+        JMP_ADDRESS: 11,
+        JC_ADDRESS: 12,
+        JNC_ADDRESS: 13,
+        JZ_ADDRESS: 14,
+        JNZ_ADDRESS: 15,
+        PRINT_STRING: 16,
+        PRINT_DECIMAL: 17
     };
 
     return opcodes;
