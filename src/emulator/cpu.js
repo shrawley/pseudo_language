@@ -8,14 +8,6 @@ app.service('cpu', ['opcodes', 'memory', function(opcodes, memory) {
             }
 
             try {
-                var checkGPR = function(reg) {
-                    if (reg < 0 || reg >= self.gpr.length) {
-                        throw "Invalid register: " + reg;
-                    } else {
-                        return reg;
-                    }
-                };
-
                 var checkGPR_SP = function(reg) {
                     if (reg < 0 || reg >= 1 + self.gpr.length) {
                         throw "Invalid register: " + reg;

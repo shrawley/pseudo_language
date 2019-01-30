@@ -44,98 +44,21 @@ var app = angular.module('ASMSimulator', []);
                 }
             };
 
-            // Allowed registers: A, B, C, D, SP
-            var parseRegister = function (input) {
-                input = input.toUpperCase();
-
-                if (input === 'A') {
-                    return 0;
-                } else if (input === 'B') {
-                    return 1;
-                } else if (input === 'C') {
-                    return 2;
-                } else if (input === 'D') {
-                    return 3;
-                } else if (input === 'SP') {
-                    return 4;
-                } else {
-                    return undefined;
-                }
-            };
-
-            var parseOffsetAddressing = function (input) {
-                input = input.toUpperCase();
-                var m = 0;
-                var base = 0;
-
-                if (input[0] === 'A') {
-                    base = 0;
-                } else if (input[0] === 'B') {
-                    base = 1;
-                } else if (input[0] === 'C') {
-                    base = 2;
-                } else if (input[0] === 'D') {
-                    base = 3;
-                } else if (input.slice(0, 2) === "SP") {
-                    base = 4;
-                } else {
-                    return undefined;
-                }
-                var offset_start = 1;
-                if (base === 4) {
-                    offset_start = 2;
-                }
-
-                if (input[offset_start] === '-') {
-                    m = -1;
-                } else if (input[offset_start] === '+') {
-                    m = 1;
-                } else {
-                    return undefined;
-                }
-
-                var offset = m * parseInt(input.slice(offset_start + 1), 10);
-
-                if (offset < -16 || offset > 15)
-                    throw "offset must be a value between -16...+15";
-
-                if (offset < 0) {
-                    offset = 32 + offset; // two's complement representation in 5-bit
-                }
-
-                return offset * 8 + base; // shift offset 3 bits right and add code for register
-            };
-
             // Allowed: Register, Label or Number; SP+/-Number is allowed for 'regaddress' type
             var parseRegOrNumber = function (input, typeReg, typeNumber) {
-                var register = parseRegister(input);
-
-                if (register !== undefined) {
-                    return {type: typeReg, value: register};
+                var label = parseLabel(input);
+                if (label !== undefined) {
+                    return {type: typeNumber, value: label};
                 } else {
-                    var label = parseLabel(input);
-                    if (label !== undefined) {
-                        return {type: typeNumber, value: label};
-                    } else {
-                        if (typeReg === "regaddress") {
+                    var value = parseNumber(input);
 
-                            register = parseOffsetAddressing(input);
-
-                            if (register !== undefined) {
-                                return {type: typeReg, value: register};
-                            }
-                        }
-
-                        var value = parseNumber(input);
-
-                        if (isNaN(value)) {
-                            throw "Not a " + typeNumber + ": " + value;
-                        }
-                        else if (value < 0 || value > 255)
-                            throw typeNumber + " must have a value between 0-255";
-
-                        return {type: typeNumber, value: value};
+                    if (isNaN(value)) {
+                        throw "Not a " + typeNumber + ": " + value;
                     }
+                    else if (value < 0 || value > 255)
+                        throw typeNumber + " must have a value between 0-255";
+
+                    return {type: typeNumber, value: value};
                 }
             };
 
@@ -217,34 +140,16 @@ var app = angular.module('ASMSimulator', []);
                                         throw "DB does not support this operand";
 
                                     break;
-                                case 'HLT':
-                                    checkNoExtraArg('HLT', match[op1_group]);
-                                    opCode = opcodes.NONE;
-                                    code.push(opCode);
-                                    break;
-
-                                case 'MOV':
+                                case 'CP':
                                     p1 = getValue(match[op1_group]);
                                     p2 = getValue(match[op2_group]);
 
-                                    if (p1.type === "register" && p2.type === "register")
-                                        opCode = opcodes.MOV_REG_TO_REG;
-                                    else if (p1.type === "register" && p2.type === "address")
-                                        opCode = opcodes.MOV_ADDRESS_TO_REG;
-                                    else if (p1.type === "register" && p2.type === "regaddress")
-                                        opCode = opcodes.MOV_REGADDRESS_TO_REG;
-                                    else if (p1.type === "address" && p2.type === "register")
-                                        opCode = opcodes.MOV_REG_TO_ADDRESS;
-                                    else if (p1.type === "regaddress" && p2.type === "register")
-                                        opCode = opcodes.MOV_REG_TO_REGADDRESS;
-                                    else if (p1.type === "register" && p2.type === "number")
-                                        opCode = opcodes.MOV_NUMBER_TO_REG;
-                                    else if (p1.type === "address" && p2.type === "number")
-                                        opCode = opcodes.MOV_NUMBER_TO_ADDRESS;
-                                    else if (p1.type === "regaddress" && p2.type === "number")
-                                        opCode = opcodes.MOV_NUMBER_TO_REGADDRESS;
+                                    if (p1.type === "address" && p2.type === "number")
+                                        opCode = opcodes.CP_NUMBER_TO_ADDRESS;
+                                    else if (p1.type === "address" && p2.type === "address")
+                                        opCode = opcodes.CP_ADDRESS_TO_ADDRESS;
                                     else
-                                        throw "MOV does not support this operands";
+                                        throw "CP does not support this operands";
 
                                     code.push(opCode, p1.value, p2.value);
                                     break;
@@ -252,14 +157,10 @@ var app = angular.module('ASMSimulator', []);
                                     p1 = getValue(match[op1_group]);
                                     p2 = getValue(match[op2_group]);
 
-                                    if (p1.type === "register" && p2.type === "register")
-                                        opCode = opcodes.ADD_REG_TO_REG;
-                                    else if (p1.type === "register" && p2.type === "regaddress")
-                                        opCode = opcodes.ADD_REGADDRESS_TO_REG;
-                                    else if (p1.type === "register" && p2.type === "address")
-                                        opCode = opcodes.ADD_ADDRESS_TO_REG;
-                                    else if (p1.type === "register" && p2.type === "number")
-                                        opCode = opcodes.ADD_NUMBER_TO_REG;
+                                    if (p1.type === "address" && p2.type === "address")
+                                        opCode = opcodes.ADD_ADDRESS_TO_ADDRESS;
+                                    else if (p1.type === "address" && p2.type === "number")
+                                        opCode = opcodes.ADD_NUMBER_TO_ADDRESS;
                                     else
                                         throw "ADD does not support this operands";
 
@@ -269,14 +170,10 @@ var app = angular.module('ASMSimulator', []);
                                     p1 = getValue(match[op1_group]);
                                     p2 = getValue(match[op2_group]);
 
-                                    if (p1.type === "register" && p2.type === "register")
-                                        opCode = opcodes.SUB_REG_FROM_REG;
-                                    else if (p1.type === "register" && p2.type === "regaddress")
-                                        opCode = opcodes.SUB_REGADDRESS_FROM_REG;
-                                    else if (p1.type === "register" && p2.type === "address")
-                                        opCode = opcodes.SUB_ADDRESS_FROM_REG;
-                                    else if (p1.type === "register" && p2.type === "number")
-                                        opCode = opcodes.SUB_NUMBER_FROM_REG;
+                                    if (p1.type === "address" && p2.type === "address")
+                                        opCode = opcodes.SUB_ADDRESS_FROM_ADDRESS;
+                                    else if (p1.type === "address" && p2.type === "number")
+                                        opCode = opcodes.SUB_NUMBER_FROM_ADDRESS;
                                     else
                                         throw "SUB does not support this operands";
 
@@ -286,8 +183,8 @@ var app = angular.module('ASMSimulator', []);
                                     p1 = getValue(match[op1_group]);
                                     checkNoExtraArg('INC', match[op2_group]);
 
-                                    if (p1.type === "register")
-                                        opCode = opcodes.INC_REG;
+                                    if (p1.type === "address")
+                                        opCode = opcodes.INC_ADDRESS;
                                     else
                                         throw "INC does not support this operand";
 
@@ -298,8 +195,8 @@ var app = angular.module('ASMSimulator', []);
                                     p1 = getValue(match[op1_group]);
                                     checkNoExtraArg('DEC', match[op2_group]);
 
-                                    if (p1.type === "register")
-                                        opCode = opcodes.DEC_REG;
+                                    if (p1.type === "address")
+                                        opCode = opcodes.DEC_ADDRESS;
                                     else
                                         throw "DEC does not support this operand";
 
@@ -310,14 +207,10 @@ var app = angular.module('ASMSimulator', []);
                                     p1 = getValue(match[op1_group]);
                                     p2 = getValue(match[op2_group]);
 
-                                    if (p1.type === "register" && p2.type === "register")
-                                        opCode = opcodes.CMP_REG_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "regaddress")
-                                        opCode = opcodes.CMP_REGADDRESS_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "address")
-                                        opCode = opcodes.CMP_ADDRESS_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "number")
-                                        opCode = opcodes.CMP_NUMBER_WITH_REG;
+                                    if (p1.type === "address" && p2.type === "address")
+                                        opCode = opcodes.CMP_ADDRESS_WITH_ADDRESS;
+                                    else if (p1.type === "address" && p2.type === "number")
+                                        opCode = opcodes.CMP_NUMBER_WITH_ADDRESS;
                                     else
                                         throw "CMP does not support this operands";
 
@@ -327,39 +220,29 @@ var app = angular.module('ASMSimulator', []);
                                     p1 = getValue(match[op1_group]);
                                     checkNoExtraArg('JMP', match[op2_group]);
 
-                                    if (p1.type === "register")
-                                        opCode = opcodes.JMP_REGADDRESS;
-                                    else if (p1.type === "number")
+                                    if (p1.type === "number")
                                         opCode = opcodes.JMP_ADDRESS;
                                     else
                                         throw "JMP does not support this operands";
 
                                     code.push(opCode, p1.value);
                                     break;
-                                case 'JC':
-                                case 'JB':
-                                case 'JNAE':
+                                case 'JO':
                                     p1 = getValue(match[op1_group]);
                                     checkNoExtraArg(instr, match[op2_group]);
 
-                                    if (p1.type === "register")
-                                        opCode = opcodes.JC_REGADDRESS;
-                                    else if (p1.type === "number")
+                                    if (p1.type === "number")
                                         opCode = opcodes.JC_ADDRESS;
                                     else
                                         throw instr + " does not support this operand";
 
                                     code.push(opCode, p1.value);
                                     break;
-                                case 'JNC':
-                                case 'JNB':
-                                case 'JAE':
+                                case 'JNO':
                                     p1 = getValue(match[op1_group]);
                                     checkNoExtraArg(instr, match[op2_group]);
 
-                                    if (p1.type === "register")
-                                        opCode = opcodes.JNC_REGADDRESS;
-                                    else if (p1.type === "number")
+                                    if (p1.type === "number")
                                         opCode = opcodes.JNC_ADDRESS;
                                     else
                                         throw instr + "does not support this operand";
@@ -367,13 +250,10 @@ var app = angular.module('ASMSimulator', []);
                                     code.push(opCode, p1.value);
                                     break;
                                 case 'JZ':
-                                case 'JE':
                                     p1 = getValue(match[op1_group]);
                                     checkNoExtraArg(instr, match[op2_group]);
 
-                                    if (p1.type === "register")
-                                        opCode = opcodes.JZ_REGADDRESS;
-                                    else if (p1.type === "number")
+                                    if (p1.type === "number")
                                         opCode = opcodes.JZ_ADDRESS;
                                     else
                                         throw instr + " does not support this operand";
@@ -381,227 +261,15 @@ var app = angular.module('ASMSimulator', []);
                                     code.push(opCode, p1.value);
                                     break;
                                 case 'JNZ':
-                                case 'JNE':
                                     p1 = getValue(match[op1_group]);
                                     checkNoExtraArg(instr, match[op2_group]);
 
-                                    if (p1.type === "register")
-                                        opCode = opcodes.JNZ_REGADDRESS;
-                                    else if (p1.type === "number")
+                                    if (p1.type === "number")
                                         opCode = opcodes.JNZ_ADDRESS;
                                     else
                                         throw instr + " does not support this operand";
 
                                     code.push(opCode, p1.value);
-                                    break;
-                                case 'JA':
-                                case 'JNBE':
-                                    p1 = getValue(match[op1_group]);
-                                    checkNoExtraArg(instr, match[op2_group]);
-
-                                    if (p1.type === "register")
-                                        opCode = opcodes.JA_REGADDRESS;
-                                    else if (p1.type === "number")
-                                        opCode = opcodes.JA_ADDRESS;
-                                    else
-                                        throw instr + " does not support this operand";
-
-                                    code.push(opCode, p1.value);
-                                    break;
-                                case 'JNA':
-                                case 'JBE':
-                                    p1 = getValue(match[op1_group]);
-                                    checkNoExtraArg(instr, match[op2_group]);
-
-                                    if (p1.type === "register")
-                                        opCode = opcodes.JNA_REGADDRESS;
-                                    else if (p1.type === "number")
-                                        opCode = opcodes.JNA_ADDRESS;
-                                    else
-                                        throw instr + " does not support this operand";
-
-                                    code.push(opCode, p1.value);
-                                    break;
-                                case 'PUSH':
-                                    p1 = getValue(match[op1_group]);
-                                    checkNoExtraArg(instr, match[op2_group]);
-
-                                    if (p1.type === "register")
-                                        opCode = opcodes.PUSH_REG;
-                                    else if (p1.type === "regaddress")
-                                        opCode = opcodes.PUSH_REGADDRESS;
-                                    else if (p1.type === "address")
-                                        opCode = opcodes.PUSH_ADDRESS;
-                                    else if (p1.type === "number")
-                                        opCode = opcodes.PUSH_NUMBER;
-                                    else
-                                        throw "PUSH does not support this operand";
-
-                                    code.push(opCode, p1.value);
-                                    break;
-                                case 'POP':
-                                    p1 = getValue(match[op1_group]);
-                                    checkNoExtraArg(instr, match[op2_group]);
-
-                                    if (p1.type === "register")
-                                        opCode = opcodes.POP_REG;
-                                    else
-                                        throw "PUSH does not support this operand";
-
-                                    code.push(opCode, p1.value);
-                                    break;
-                                case 'CALL':
-                                    p1 = getValue(match[op1_group]);
-                                    checkNoExtraArg(instr, match[op2_group]);
-
-                                    if (p1.type === "register")
-                                        opCode = opcodes.CALL_REGADDRESS;
-                                    else if (p1.type === "number")
-                                        opCode = opcodes.CALL_ADDRESS;
-                                    else
-                                        throw "CALL does not support this operand";
-
-                                    code.push(opCode, p1.value);
-                                    break;
-                                case 'RET':
-                                    checkNoExtraArg(instr, match[op1_group]);
-
-                                    opCode = opcodes.RET;
-
-                                    code.push(opCode);
-                                    break;
-
-                                case 'MUL':
-                                    p1 = getValue(match[op1_group]);
-                                    checkNoExtraArg(instr, match[op2_group]);
-
-                                    if (p1.type === "register")
-                                        opCode = opcodes.MUL_REG;
-                                    else if (p1.type === "regaddress")
-                                        opCode = opcodes.MUL_REGADDRESS;
-                                    else if (p1.type === "address")
-                                        opCode = opcodes.MUL_ADDRESS;
-                                    else if (p1.type === "number")
-                                        opCode = opcodes.MUL_NUMBER;
-                                    else
-                                        throw "MULL does not support this operand";
-
-                                    code.push(opCode, p1.value);
-                                    break;
-                                case 'DIV':
-                                    p1 = getValue(match[op1_group]);
-                                    checkNoExtraArg(instr, match[op2_group]);
-
-                                    if (p1.type === "register")
-                                        opCode = opcodes.DIV_REG;
-                                    else if (p1.type === "regaddress")
-                                        opCode = opcodes.DIV_REGADDRESS;
-                                    else if (p1.type === "address")
-                                        opCode = opcodes.DIV_ADDRESS;
-                                    else if (p1.type === "number")
-                                        opCode = opcodes.DIV_NUMBER;
-                                    else
-                                        throw "DIV does not support this operand";
-
-                                    code.push(opCode, p1.value);
-                                    break;
-                                case 'AND':
-                                    p1 = getValue(match[op1_group]);
-                                    p2 = getValue(match[op2_group]);
-
-                                    if (p1.type === "register" && p2.type === "register")
-                                        opCode = opcodes.AND_REG_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "regaddress")
-                                        opCode = opcodes.AND_REGADDRESS_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "address")
-                                        opCode = opcodes.AND_ADDRESS_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "number")
-                                        opCode = opcodes.AND_NUMBER_WITH_REG;
-                                    else
-                                        throw "AND does not support this operands";
-
-                                    code.push(opCode, p1.value, p2.value);
-                                    break;
-                                case 'OR':
-                                    p1 = getValue(match[op1_group]);
-                                    p2 = getValue(match[op2_group]);
-
-                                    if (p1.type === "register" && p2.type === "register")
-                                        opCode = opcodes.OR_REG_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "regaddress")
-                                        opCode = opcodes.OR_REGADDRESS_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "address")
-                                        opCode = opcodes.OR_ADDRESS_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "number")
-                                        opCode = opcodes.OR_NUMBER_WITH_REG;
-                                    else
-                                        throw "OR does not support this operands";
-
-                                    code.push(opCode, p1.value, p2.value);
-                                    break;
-                                case 'XOR':
-                                    p1 = getValue(match[op1_group]);
-                                    p2 = getValue(match[op2_group]);
-
-                                    if (p1.type === "register" && p2.type === "register")
-                                        opCode = opcodes.XOR_REG_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "regaddress")
-                                        opCode = opcodes.XOR_REGADDRESS_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "address")
-                                        opCode = opcodes.XOR_ADDRESS_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "number")
-                                        opCode = opcodes.XOR_NUMBER_WITH_REG;
-                                    else
-                                        throw "XOR does not support this operands";
-
-                                    code.push(opCode, p1.value, p2.value);
-                                    break;
-                                case 'NOT':
-                                    p1 = getValue(match[op1_group]);
-                                    checkNoExtraArg(instr, match[op2_group]);
-
-                                    if (p1.type === "register")
-                                        opCode = opcodes.NOT_REG;
-                                    else
-                                        throw "NOT does not support this operand";
-
-                                    code.push(opCode, p1.value);
-                                    break;
-                                case 'SHL':
-                                case 'SAL':
-                                    p1 = getValue(match[op1_group]);
-                                    p2 = getValue(match[op2_group]);
-
-                                    if (p1.type === "register" && p2.type === "register")
-                                        opCode = opcodes.SHL_REG_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "regaddress")
-                                        opCode = opcodes.SHL_REGADDRESS_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "address")
-                                        opCode = opcodes.SHL_ADDRESS_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "number")
-                                        opCode = opcodes.SHL_NUMBER_WITH_REG;
-                                    else
-                                        throw instr + " does not support this operands";
-
-                                    code.push(opCode, p1.value, p2.value);
-                                    break;
-                                case 'SHR':
-                                case 'SAR':
-                                    p1 = getValue(match[op1_group]);
-                                    p2 = getValue(match[op2_group]);
-
-                                    if (p1.type === "register" && p2.type === "register")
-                                        opCode = opcodes.SHR_REG_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "regaddress")
-                                        opCode = opcodes.SHR_REGADDRESS_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "address")
-                                        opCode = opcodes.SHR_ADDRESS_WITH_REG;
-                                    else if (p1.type === "register" && p2.type === "number")
-                                        opCode = opcodes.SHR_NUMBER_WITH_REG;
-                                    else
-                                        throw instr + " does not support this operands";
-
-                                    code.push(opCode, p1.value, p2.value);
                                     break;
                                 default:
                                     throw "Invalid instruction: " + match[2];
@@ -645,14 +313,6 @@ var app = angular.module('ASMSimulator', []);
             }
 
             try {
-                var checkGPR = function(reg) {
-                    if (reg < 0 || reg >= self.gpr.length) {
-                        throw "Invalid register: " + reg;
-                    } else {
-                        return reg;
-                    }
-                };
-
                 var checkGPR_SP = function(reg) {
                     if (reg < 0 || reg >= 1 + self.gpr.length) {
                         throw "Invalid register: " + reg;
@@ -688,24 +348,6 @@ var app = angular.module('ASMSimulator', []);
                     } else {
                         throw "Invalid register: " + reg;
                     }
-                };
-
-                var indirectRegisterAddress = function(value) {
-                    var reg = value % 8;
-
-                    var base;
-                    if (reg < self.gpr.length) {
-                        base = self.gpr[reg];
-                    } else {
-                        base = self.sp;
-                    }
-
-                    var offset = Math.floor(value / 8);
-                    if ( offset > 15 ) {
-                        offset = offset - 32;
-                    }
-
-                    return base+offset;
                 };
 
                 var checkOperation = function(value) {
@@ -766,164 +408,72 @@ var app = angular.module('ASMSimulator', []);
                 switch(instr) {
                     case opcodes.NONE:
                         return false; // Abort step
-                    case opcodes.MOV_REG_TO_REG:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        regFrom = checkGPR_SP(memory.load(++self.ip));
-                        setGPR_SP(regTo,getGPR_SP(regFrom));
-                        self.ip++;
-                        break;
-                    case opcodes.MOV_ADDRESS_TO_REG:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        memFrom = memory.load(++self.ip);
-                        setGPR_SP(regTo,memory.load(memFrom));
-                        self.ip++;
-                        break;
-                    case opcodes.MOV_REGADDRESS_TO_REG:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        regFrom = memory.load(++self.ip);
-                        setGPR_SP(regTo,memory.load(indirectRegisterAddress(regFrom)));
-                        self.ip++;
-                        break;
-                    case opcodes.MOV_REG_TO_ADDRESS:
-                        memTo = memory.load(++self.ip);
-                        regFrom = checkGPR_SP(memory.load(++self.ip));
-                        memory.store(memTo, getGPR_SP(regFrom));
-                        self.ip++;
-                        break;
-                    case opcodes.MOV_REG_TO_REGADDRESS:
-                        regTo = memory.load(++self.ip);
-                        regFrom = checkGPR_SP(memory.load(++self.ip));
-                        memory.store(indirectRegisterAddress(regTo), getGPR_SP(regFrom));
-                        self.ip++;
-                        break;
-                    case opcodes.MOV_NUMBER_TO_REG:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        number = memory.load(++self.ip);
-                        setGPR_SP(regTo,number);
-                        self.ip++;
-                        break;
-                    case opcodes.MOV_NUMBER_TO_ADDRESS:
+                    case opcodes.CP_NUMBER_TO_ADDRESS:
                         memTo = memory.load(++self.ip);
                         number = memory.load(++self.ip);
                         memory.store(memTo, number);
                         self.ip++;
                         break;
-                    case opcodes.MOV_NUMBER_TO_REGADDRESS:
-                        regTo = memory.load(++self.ip);
-                        number = memory.load(++self.ip);
-                        memory.store(indirectRegisterAddress(regTo), number);
-                        self.ip++;
-                        break;
-                    case opcodes.ADD_REG_TO_REG:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        regFrom = checkGPR_SP(memory.load(++self.ip));
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) + getGPR_SP(regFrom)));
-                        self.ip++;
-                        break;
-                    case opcodes.ADD_REGADDRESS_TO_REG:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        regFrom = memory.load(++self.ip);
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) + memory.load(indirectRegisterAddress(regFrom))));
-                        self.ip++;
-                        break;
-                    case opcodes.ADD_ADDRESS_TO_REG:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
+                    case opcodes.CP_ADDRESS_TO_ADDRESS:
+                        memTo = memory.load(++self.ip);
                         memFrom = memory.load(++self.ip);
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) + memory.load(memFrom)));
+                        memory.store(memTo, memFrom);
                         self.ip++;
                         break;
-                    case opcodes.ADD_NUMBER_TO_REG:
+                    case opcodes.ADD_NUMBER_TO_ADDRESS: //TODO: continue here
                         regTo = checkGPR_SP(memory.load(++self.ip));
                         number = memory.load(++self.ip);
                         setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) + number));
                         self.ip++;
                         break;
-                    case opcodes.SUB_REG_FROM_REG:
+                    case opcodes.ADD_ADDRESS_TO_ADDRESS:
                         regTo = checkGPR_SP(memory.load(++self.ip));
-                        regFrom = checkGPR_SP(memory.load(++self.ip));
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) - self.gpr[regFrom]));
+                        number = memory.load(++self.ip);
+                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) + number));
                         self.ip++;
                         break;
-                    case opcodes.SUB_REGADDRESS_FROM_REG:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        regFrom = memory.load(++self.ip);
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) - memory.load(indirectRegisterAddress(regFrom))));
-                        self.ip++;
-                        break;
-                    case opcodes.SUB_ADDRESS_FROM_REG:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        memFrom = memory.load(++self.ip);
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) - memory.load(memFrom)));
-                        self.ip++;
-                        break;
-                    case opcodes.SUB_NUMBER_FROM_REG:
+                    case opcodes.SUB_NUMBER_FROM_ADDRESS:
                         regTo = checkGPR_SP(memory.load(++self.ip));
                         number = memory.load(++self.ip);
                         setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) - number));
                         self.ip++;
                         break;
-                    case opcodes.INC_REG:
+                    case opcodes.SUB_ADDRESS_FROM_ADDRESS:
+                        regTo = checkGPR_SP(memory.load(++self.ip));
+                        number = memory.load(++self.ip);
+                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) - number));
+                        self.ip++;
+                        break;
+                    case opcodes.INC_ADDRESS:
                         regTo = checkGPR_SP(memory.load(++self.ip));
                         setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) + 1));
                         self.ip++;
                         break;
-                    case opcodes.DEC_REG:
+                    case opcodes.DEC_ADDRESS:
                         regTo = checkGPR_SP(memory.load(++self.ip));
                         setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) - 1));
                         self.ip++;
                         break;
-                    case opcodes.CMP_REG_WITH_REG:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        regFrom = checkGPR_SP(memory.load(++self.ip));
-                        checkOperation(getGPR_SP(regTo) - getGPR_SP(regFrom));
-                        self.ip++;
-                        break;
-                    case opcodes.CMP_REGADDRESS_WITH_REG:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        regFrom = memory.load(++self.ip);
-                        checkOperation(getGPR_SP(regTo) - memory.load(indirectRegisterAddress(regFrom)));
-                        self.ip++;
-                        break;
-                    case opcodes.CMP_ADDRESS_WITH_REG:
+                    case opcodes.CMP_ADDRESS_WITH_ADDRESS:
                         regTo = checkGPR_SP(memory.load(++self.ip));
                         memFrom = memory.load(++self.ip);
                         checkOperation(getGPR_SP(regTo) - memory.load(memFrom));
                         self.ip++;
                         break;
-                    case opcodes.CMP_NUMBER_WITH_REG:
+                    case opcodes.CMP_NUMBER_WITH_ADDRESS:
                         regTo = checkGPR_SP(memory.load(++self.ip));
                         number = memory.load(++self.ip);
                         checkOperation(getGPR_SP(regTo) - number);
                         self.ip++;
                         break;
-                    case opcodes.JMP_REGADDRESS:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        jump(self.gpr[regTo]);
-                        break;
                     case opcodes.JMP_ADDRESS:
                         number = memory.load(++self.ip);
                         jump(number);
-                        break;
-                    case opcodes.JC_REGADDRESS:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        if (self.carry) {
-                            jump(self.gpr[regTo]);
-                        } else {
-                            self.ip++;
-                        }
                         break;
                     case opcodes.JC_ADDRESS:
                         number = memory.load(++self.ip);
                         if (self.carry) {
                             jump(number);
-                        } else {
-                            self.ip++;
-                        }
-                        break;
-                    case opcodes.JNC_REGADDRESS:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        if (!self.carry) {
-                            jump(self.gpr[regTo]);
                         } else {
                             self.ip++;
                         }
@@ -936,26 +486,10 @@ var app = angular.module('ASMSimulator', []);
                             self.ip++;
                         }
                         break;
-                    case opcodes.JZ_REGADDRESS:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        if (self.zero) {
-                            jump(self.gpr[regTo]);
-                        } else {
-                            self.ip++;
-                        }
-                        break;
                     case opcodes.JZ_ADDRESS:
                         number = memory.load(++self.ip);
                         if (self.zero) {
                             jump(number);
-                        } else {
-                            self.ip++;
-                        }
-                        break;
-                    case opcodes.JNZ_REGADDRESS:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        if (!self.zero) {
-                            jump(self.gpr[regTo]);
                         } else {
                             self.ip++;
                         }
@@ -967,241 +501,6 @@ var app = angular.module('ASMSimulator', []);
                         } else {
                             self.ip++;
                         }
-                        break;
-                    case opcodes.JA_REGADDRESS:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        if (!self.zero && !self.carry) {
-                            jump(self.gpr[regTo]);
-                        } else {
-                            self.ip++;
-                        }
-                        break;
-                    case opcodes.JA_ADDRESS:
-                        number = memory.load(++self.ip);
-                        if (!self.zero && !self.carry) {
-                            jump(number);
-                        } else {
-                            self.ip++;
-                        }
-                        break;
-                    case opcodes.JNA_REGADDRESS: // JNA REG
-                        regTo = checkGPR(memory.load(++self.ip));
-                        if (self.zero || self.carry) {
-                            jump(self.gpr[regTo]);
-                        } else {
-                            self.ip++;
-                        }
-                        break;
-                    case opcodes.JNA_ADDRESS:
-                        number = memory.load(++self.ip);
-                        if (self.zero || self.carry) {
-                            jump(number);
-                        } else {
-                            self.ip++;
-                        }
-                        break;
-                    case opcodes.PUSH_REG:
-                        regFrom = checkGPR(memory.load(++self.ip));
-                        push(self.gpr[regFrom]);
-                        self.ip++;
-                        break;
-                    case opcodes.PUSH_REGADDRESS:
-                        regFrom = memory.load(++self.ip);
-                        push(memory.load(indirectRegisterAddress(regFrom)));
-                        self.ip++;
-                        break;
-                    case opcodes.PUSH_ADDRESS:
-                        memFrom = memory.load(++self.ip);
-                        push(memory.load(memFrom));
-                        self.ip++;
-                        break;
-                    case opcodes.PUSH_NUMBER:
-                        number = memory.load(++self.ip);
-                        push(number);
-                        self.ip++;
-                        break;
-                    case opcodes.POP_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        self.gpr[regTo] = pop();
-                        self.ip++;
-                        break;
-                    case opcodes.CALL_REGADDRESS:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        push(self.ip+1);
-                        jump(self.gpr[regTo]);
-                        break;
-                    case opcodes.CALL_ADDRESS:
-                        number = memory.load(++self.ip);
-                        push(self.ip+1);
-                        jump(number);
-                        break;
-                    case opcodes.RET:
-                        jump(pop());
-                        break;
-                    case opcodes.MUL_REG: // A = A * REG
-                        regFrom = checkGPR(memory.load(++self.ip));
-                        self.gpr[0] = checkOperation(self.gpr[0] * self.gpr[regFrom]);
-                        self.ip++;
-                        break;
-                    case opcodes.MUL_REGADDRESS: // A = A * [REG]
-                        regFrom = memory.load(++self.ip);
-                        self.gpr[0] = checkOperation(self.gpr[0] * memory.load(indirectRegisterAddress(regFrom)));
-                        self.ip++;
-                        break;
-                    case opcodes.MUL_ADDRESS: // A = A * [NUMBER]
-                        memFrom = memory.load(++self.ip);
-                        self.gpr[0] = checkOperation(self.gpr[0] * memory.load(memFrom));
-                        self.ip++;
-                        break;
-                    case opcodes.MUL_NUMBER: // A = A * NUMBER
-                        number = memory.load(++self.ip);
-                        self.gpr[0] = checkOperation(self.gpr[0] * number);
-                        self.ip++;
-                        break;
-                    case opcodes.DIV_REG: // A = A / REG
-                        regFrom = checkGPR(memory.load(++self.ip));
-                        self.gpr[0] = checkOperation(division(self.gpr[regFrom]));
-                        self.ip++;
-                        break;
-                    case opcodes.DIV_REGADDRESS: // A = A / [REG]
-                        regFrom = memory.load(++self.ip);
-                        self.gpr[0] = checkOperation(division(memory.load(indirectRegisterAddress(regFrom))));
-                        self.ip++;
-                        break;
-                    case opcodes.DIV_ADDRESS: // A = A / [NUMBER]
-                        memFrom = memory.load(++self.ip);
-                        self.gpr[0] = checkOperation(division(memory.load(memFrom)));
-                        self.ip++;
-                        break;
-                    case opcodes.DIV_NUMBER: // A = A / NUMBER
-                        number = memory.load(++self.ip);
-                        self.gpr[0] = checkOperation(division(number));
-                        self.ip++;
-                        break;
-                    case opcodes.AND_REG_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        regFrom = checkGPR(memory.load(++self.ip));
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] & self.gpr[regFrom]);
-                        self.ip++;
-                        break;
-                    case opcodes.AND_REGADDRESS_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        regFrom = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] & memory.load(indirectRegisterAddress(regFrom)));
-                        self.ip++;
-                        break;
-                    case opcodes.AND_ADDRESS_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        memFrom = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] & memory.load(memFrom));
-                        self.ip++;
-                        break;
-                    case opcodes.AND_NUMBER_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        number = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] & number);
-                        self.ip++;
-                        break;
-                    case opcodes.OR_REG_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        regFrom = checkGPR(memory.load(++self.ip));
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] | self.gpr[regFrom]);
-                        self.ip++;
-                        break;
-                    case opcodes.OR_REGADDRESS_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        regFrom = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] | memory.load(indirectRegisterAddress(regFrom)));
-                        self.ip++;
-                        break;
-                    case opcodes.OR_ADDRESS_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        memFrom = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] | memory.load(memFrom));
-                        self.ip++;
-                        break;
-                    case opcodes.OR_NUMBER_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        number = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] | number);
-                        self.ip++;
-                        break;
-                    case opcodes.XOR_REG_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        regFrom = checkGPR(memory.load(++self.ip));
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] ^ self.gpr[regFrom]);
-                        self.ip++;
-                        break;
-                    case opcodes.XOR_REGADDRESS_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        regFrom = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] ^ memory.load(indirectRegisterAddress(regFrom)));
-                        self.ip++;
-                        break;
-                    case opcodes.XOR_ADDRESS_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        memFrom = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] ^ memory.load(memFrom));
-                        self.ip++;
-                        break;
-                    case opcodes.XOR_NUMBER_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        number = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] ^ number);
-                        self.ip++;
-                        break;
-                    case opcodes.NOT_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        self.gpr[regTo] = checkOperation(~self.gpr[regTo]);
-                        self.ip++;
-                        break;
-                    case opcodes.SHL_REG_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        regFrom = checkGPR(memory.load(++self.ip));
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] << self.gpr[regFrom]);
-                        self.ip++;
-                        break;
-                    case opcodes.SHL_REGADDRESS_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        regFrom = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] << memory.load(indirectRegisterAddress(regFrom)));
-                        self.ip++;
-                        break;
-                    case opcodes.SHL_ADDRESS_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        memFrom = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] << memory.load(memFrom));
-                        self.ip++;
-                        break;
-                    case opcodes.SHL_NUMBER_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        number = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] << number);
-                        self.ip++;
-                        break;
-                    case opcodes.SHR_REG_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        regFrom = checkGPR(memory.load(++self.ip));
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] >>> self.gpr[regFrom]);
-                        self.ip++;
-                        break;
-                    case opcodes.SHR_REGADDRESS_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        regFrom = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] >>> memory.load(indirectRegisterAddress(regFrom)));
-                        self.ip++;
-                        break;
-                    case opcodes.SHR_ADDRESS_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        memFrom = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] >>> memory.load(memFrom));
-                        self.ip++;
-                        break;
-                    case opcodes.SHR_NUMBER_WITH_REG:
-                        regTo = checkGPR(memory.load(++self.ip));
-                        number = memory.load(++self.ip);
-                        self.gpr[regTo] = checkOperation(self.gpr[regTo] >>> number);
-                        self.ip++;
                         break;
                     default:
                         throw "Invalid op code: " + instr;
@@ -1270,34 +569,23 @@ var app = angular.module('ASMSimulator', []);
 ;app.service('opcodes', [function() {
     var opcodes = {
         NONE: 0,
-        MOV_NUMBER_TO_ADDRESS: 7,
-        MOV_ADDRESS_TO_ADDRESS: 7,
-        ADD_NUMBER_TO_ADDRESS: 13,
-        ADD_ADDRESS_TO_ADDRESS: 13,
-        SUB_NUMBER_FROM_ADDRESS: 17,
-        SUB_ADDRESS_FROM_ADDRESS: 17,
-        INC_ADDRESS: 18,
-        DEC_ADDRESS: 19,
-        CMP_ADDRESS_WITH_ADDRESS: 22,
-        CMP_NUMBER_WITH_ADDRESS: 23,
-        JMP_ADDRESS: 31,
-        JC_ADDRESS: 33,
-        JNC_ADDRESS: 35,
-        JZ_ADDRESS: 37,
-        JNZ_ADDRESS: 39,
-        AND_REG_WITH_REG: 70,
-        AND_REGADDRESS_WITH_REG: 71,
-        AND_ADDRESS_WITH_REG: 72,
-        AND_NUMBER_WITH_REG: 73,
-        OR_REG_WITH_REG: 74,
-        OR_REGADDRESS_WITH_REG: 75,
-        OR_ADDRESS_WITH_REG: 76,
-        OR_NUMBER_WITH_REG: 77,
-        XOR_REG_WITH_REG: 78,
-        XOR_REGADDRESS_WITH_REG: 79,
-        XOR_ADDRESS_WITH_REG: 80,
-        XOR_NUMBER_WITH_REG: 81,
-        NOT_REG: 82,
+        CP_ADDRESS_TO_ADDRESS: 1,
+        CP_NUMBER_TO_ADDRESS: 2,
+        ADD_ADDRESS_TO_ADDRESS: 3,
+        ADD_NUMBER_TO_ADDRESS: 4,
+        SUB_ADDRESS_FROM_ADDRESS: 5,
+        SUB_NUMBER_FROM_ADDRESS: 6,
+        INC_ADDRESS: 7,
+        DEC_ADDRESS: 8,
+        CMP_ADDRESS_WITH_ADDRESS: 9,
+        CMP_NUMBER_WITH_ADDRESS: 10,
+        JMP_ADDRESS: 11,
+        JC_ADDRESS: 12,
+        JNC_ADDRESS: 13,
+        JZ_ADDRESS: 14,
+        JNZ_ADDRESS: 15,
+        PRINT_STRING: 16,
+        PRINT_DECIMAL: 17
     };
 
     return opcodes;
@@ -1320,7 +608,7 @@ var app = angular.module('ASMSimulator', []);
     $scope.speed = 4;
     $scope.outputStartIndex = 232;
 
-    $scope.code = "; Simple example\n; Writes Hello World to the output\n\n	JMP start\nhello: DB \"Hello World!\" ; Variable\n       DB 0	; String terminator\n\nstart:\n	MOV C, hello    ; Point to var \n	MOV D, 232	; Point to output\n	CALL print\n        HLT             ; Stop execution\n\nprint:			; print(C:*from, D:*to)\n	PUSH A\n	PUSH B\n	MOV B, 0\n.loop:\n	MOV A, [C]	; Get char from var\n	MOV [D], A	; Write to output\n	INC C\n	INC D  \n	CMP B, [C]	; Check if end\n	JNZ .loop	; jump if not\n\n	POP B\n	POP A\n	RET";
+    $scope.code = "; Simple example\n; ;for (char i = 0; i < 50; ++i);\n i: db 0 ;char I = 0;\n loop: cmp [i], 50 ;check I against 50\n jz end ;goto end if i==50\n inc [i] ;i++\n jp loop ;goto loop\n end:";
 
     $scope.reset = function () {
         cpu.reset();
