@@ -78,10 +78,10 @@ CMP address1, address2
 CMP address, constant
 </pre>
         <h4>Jumps</h4>
-        <b>JMP - Unconditional jump</b>
+        <b>JP - Unconditional jump</b>
         <p>Let the instruction pointer do a unconditional jump to the defined address.</p>
 <pre>
-JMP address
+JP address
 </pre>
         <b>Conditional jumps</b>
         <p>Let the instruction pointer do a conditional jump to the defined address. See the table below for the available conditions.</p>
@@ -128,24 +128,24 @@ printf("%d", k);
 
 <b>in pseudo language:</b>
 <pre>
-i: db 100 //char I = 100;
-j: db 30  //char j = 30;
-k: db 0   //char k = 0;
-cp [k], [i]	//k = I;
-sub [k], [j]	//k -= j;
-printd [k]	//printf(“%d”, k);
+i: db 100       ;char i = 100;
+j: db 30        ;char j = 30;
+k: db 0         ;char k = 0;
+cp [k], [i]	;k = i;
+sub [k], [j]	;k -= j;
+printd [k]	;printf(“%d”, k);
 </pre>
 
 <b>loop example:</b>
 <pre>
-for (char i = 0; i < 50; ++i);
+for (char i = 0; i < 50; ++i)
 </pre>
 <pre>
-i: db 0			//char I = 0;
-loop: cmp [i], 50	//check I against 50
-jz end			//goto end if i==50
-inc [i]			//i++
-jp loop			//goto loop
+i: db 0			;char i = 0;
+loop: cmp [i], 50	;check i against 50
+jz end			;goto end if i==50
+inc [i]			;i++
+jp loop			;goto loop
 end:
 </pre>
         <hr style="margin-bottom:10px;"/>

@@ -65,6 +65,23 @@
                         <h4 class="panel-title">CPU & Memory</h4>
                     </div>
                     <div class="panel-body">
+                        <p class="text-muted">Registers / Flags</p>
+                        <table class="table table-condensed table-striped">
+                            <thead>
+                                <tr>
+                                    <th style="text-align:center">IP</th>
+                                    <th style="text-align:center">Z</th>
+                                    <th style="text-align:center">O</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr style="text-align:center;" class="source-code">
+                                    <td><div style="margin:auto;" class="marker marker-ip"><small>{{ cpu.ip | number:displayHex }}</small></div></td>
+                                    <td><small>{{ cpu.zero | flag }}</small></td>
+                                    <td><small>{{ cpu.carry | flag }}</small></td>
+                                </tr>
+                            </tbody>
+                        </table>
                         <p class="text-muted">RAM</p>
                         <div style="width:29em;" class="source-code">
                             <div class="memory-block"

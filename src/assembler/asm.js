@@ -215,14 +215,14 @@ app.service('assembler', ['opcodes', function (opcodes) {
 
                                     code.push(opCode, p1.value, p2.value);
                                     break;
-                                case 'JMP':
+                                case 'JP':
                                     p1 = getValue(match[op1_group]);
-                                    checkNoExtraArg('JMP', match[op2_group]);
+                                    checkNoExtraArg('JP', match[op2_group]);
 
                                     if (p1.type === "number")
-                                        opCode = opcodes.JMP_ADDRESS;
+                                        opCode = opcodes.JP_ADDRESS;
                                     else
-                                        throw "JMP does not support this operands";
+                                        throw "JP does not support this operands";
 
                                     code.push(opCode, p1.value);
                                     break;
@@ -265,6 +265,28 @@ app.service('assembler', ['opcodes', function (opcodes) {
 
                                     if (p1.type === "number")
                                         opCode = opcodes.JNZ_ADDRESS;
+                                    else
+                                        throw instr + " does not support this operand";
+
+                                    code.push(opCode, p1.value);
+                                    break;
+                                case 'PRINTD':
+                                    p1 = getValue(match[op1_group]);
+                                    checkNoExtraArg(instr, match[op2_group]);
+
+                                    if (p1.type === "number")
+                                        opCode = opcodes.PRINT_DECIMAL;
+                                    else
+                                        throw instr + " does not support this operand";
+
+                                    code.push(opCode, p1.value);
+                                    break;
+                                case 'PRINTS':
+                                    p1 = getValue(match[op1_group]);
+                                    checkNoExtraArg(instr, match[op2_group]);
+
+                                    if (p1.type === "number")
+                                        opCode = opcodes.PRINT_STRING;
                                     else
                                         throw instr + " does not support this operand";
 

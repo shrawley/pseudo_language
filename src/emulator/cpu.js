@@ -70,30 +70,6 @@ app.service('cpu', ['opcodes', 'memory', function(opcodes, memory) {
                     }
                 };
 
-                var push = function(value) {
-                    memory.store(self.sp--, value);
-                    if (self.sp < self.minSP) {
-                        throw "Stack overflow";
-                    }
-                };
-
-                var pop = function() {
-                    var value = memory.load(++self.sp);
-                    if (self.sp > self.maxSP) {
-                        throw "Stack underflow";
-                    }
-
-                    return value;
-                };
-
-                var division = function(divisor) {
-                    if (divisor === 0) {
-                        throw "Division by 0";
-                    }
-
-                    return Math.floor(self.gpr[0] / divisor);
-                };
-
                 if (self.ip < 0 || self.ip >= memory.data.length) {
                     throw "Instruction pointer is outside of memory";
                 }
@@ -161,7 +137,7 @@ app.service('cpu', ['opcodes', 'memory', function(opcodes, memory) {
                         checkOperation(getGPR_SP(regTo) - number);
                         self.ip++;
                         break;
-                    case opcodes.JMP_ADDRESS:
+                    case opcodes.JP_ADDRESS:
                         number = memory.load(++self.ip);
                         jump(number);
                         break;
@@ -189,7 +165,15 @@ app.service('cpu', ['opcodes', 'memory', function(opcodes, memory) {
                             self.ip++;
                         }
                         break;
-                    case opcodes.JNZ_ADDRESS:
+                    case opcodes.PRINT_DECIMAL:
+                        number = memory.load(++self.ip);
+                        if (!self.zero) {
+                            jump(number);
+                        } else {
+                            self.ip++;
+                        }
+                        break;
+                    case opcodes.PRINT_STRING:
                         number = memory.load(++self.ip);
                         if (!self.zero) {
                             jump(number);

@@ -11,7 +11,7 @@ app.service('opcodes', [function() {
         DEC_ADDRESS: 8,
         CMP_ADDRESS_WITH_ADDRESS: 9,
         CMP_NUMBER_WITH_ADDRESS: 10,
-        JMP_ADDRESS: 11,
+        JP_ADDRESS: 11,
         JC_ADDRESS: 12,
         JNC_ADDRESS: 13,
         JZ_ADDRESS: 14,

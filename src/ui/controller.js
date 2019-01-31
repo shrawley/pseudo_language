@@ -16,7 +16,7 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
     $scope.speed = 4;
     $scope.outputStartIndex = 232;
 
-    $scope.code = "; Simple example\n; ;for (char i = 0; i < 50; ++i);\n i: db 0 ;char I = 0;\n loop: cmp [i], 50 ;check I against 50\n jz end ;goto end if i==50\n inc [i] ;i++\n jp loop ;goto loop\n end:";
+    $scope.code = "; Simple example\n;for (char i = 0; i < 50; ++i)\ni: db 0             ;char I = 0;\nloop: cmp [i], 50   ;check I against 50\njz end              ;goto end if i==50\ninc [i]             ;i++\njp loop             ;goto loop\nend:\n";
 
     $scope.reset = function () {
         cpu.reset();

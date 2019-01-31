@@ -216,14 +216,14 @@ var app = angular.module('ASMSimulator', []);
 
                                     code.push(opCode, p1.value, p2.value);
                                     break;
-                                case 'JMP':
+                                case 'JP':
                                     p1 = getValue(match[op1_group]);
-                                    checkNoExtraArg('JMP', match[op2_group]);
+                                    checkNoExtraArg('JP', match[op2_group]);
 
                                     if (p1.type === "number")
-                                        opCode = opcodes.JMP_ADDRESS;
+                                        opCode = opcodes.JP_ADDRESS;
                                     else
-                                        throw "JMP does not support this operands";
+                                        throw "JP does not support this operands";
 
                                     code.push(opCode, p1.value);
                                     break;
@@ -466,7 +466,7 @@ var app = angular.module('ASMSimulator', []);
                         checkOperation(getGPR_SP(regTo) - number);
                         self.ip++;
                         break;
-                    case opcodes.JMP_ADDRESS:
+                    case opcodes.JP_ADDRESS:
                         number = memory.load(++self.ip);
                         jump(number);
                         break;
@@ -579,7 +579,7 @@ var app = angular.module('ASMSimulator', []);
         DEC_ADDRESS: 8,
         CMP_ADDRESS_WITH_ADDRESS: 9,
         CMP_NUMBER_WITH_ADDRESS: 10,
-        JMP_ADDRESS: 11,
+        JP_ADDRESS: 11,
         JC_ADDRESS: 12,
         JNC_ADDRESS: 13,
         JZ_ADDRESS: 14,
@@ -608,7 +608,7 @@ var app = angular.module('ASMSimulator', []);
     $scope.speed = 4;
     $scope.outputStartIndex = 232;
 
-    $scope.code = "; Simple example\n; ;for (char i = 0; i < 50; ++i);\n i: db 0 ;char I = 0;\n loop: cmp [i], 50 ;check I against 50\n jz end ;goto end if i==50\n inc [i] ;i++\n jp loop ;goto loop\n end:";
+    $scope.code = "; Simple example\n;for (char i = 0; i < 50; ++i)\ni: db 0             ;char I = 0;\nloop: cmp [i], 50   ;check I against 50\njz end              ;goto end if i==50\ninc [i]             ;i++\njp loop             ;goto loop\nend:\n";
 
     $scope.reset = function () {
         cpu.reset();
