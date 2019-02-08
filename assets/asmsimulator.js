@@ -271,6 +271,28 @@ var app = angular.module('ASMSimulator', []);
 
                                     code.push(opCode, p1.value);
                                     break;
+                                case 'PRINTD':
+                                    p1 = getValue(match[op1_group]);
+                                    checkNoExtraArg(instr, match[op2_group]);
+
+                                    if (p1.type === "number")
+                                        opCode = opcodes.PRINT_DECIMAL;
+                                    else
+                                        throw instr + " does not support this operand";
+
+                                    code.push(opCode, p1.value);
+                                    break;
+                                case 'PRINTS':
+                                    p1 = getValue(match[op1_group]);
+                                    checkNoExtraArg(instr, match[op2_group]);
+
+                                    if (p1.type === "number")
+                                        opCode = opcodes.PRINT_STRING;
+                                    else
+                                        throw instr + " does not support this operand";
+
+                                    code.push(opCode, p1.value);
+                                    break;
                                 default:
                                     throw "Invalid instruction: " + match[2];
                             }
@@ -375,30 +397,6 @@ var app = angular.module('ASMSimulator', []);
                     }
                 };
 
-                var push = function(value) {
-                    memory.store(self.sp--, value);
-                    if (self.sp < self.minSP) {
-                        throw "Stack overflow";
-                    }
-                };
-
-                var pop = function() {
-                    var value = memory.load(++self.sp);
-                    if (self.sp > self.maxSP) {
-                        throw "Stack underflow";
-                    }
-
-                    return value;
-                };
-
-                var division = function(divisor) {
-                    if (divisor === 0) {
-                        throw "Division by 0";
-                    }
-
-                    return Math.floor(self.gpr[0] / divisor);
-                };
-
                 if (self.ip < 0 || self.ip >= memory.data.length) {
                     throw "Instruction pointer is outside of memory";
                 }
@@ -445,8 +443,9 @@ var app = angular.module('ASMSimulator', []);
                         self.ip++;
                         break;
                     case opcodes.INC_ADDRESS:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) + 1));
+                        memTo = memory.load(++self.ip);
+                        number = memory.load(memTo);
+                        memory.store(memTo, number + 1);
                         self.ip++;
                         break;
                     case opcodes.DEC_ADDRESS:
@@ -494,7 +493,15 @@ var app = angular.module('ASMSimulator', []);
                             self.ip++;
                         }
                         break;
-                    case opcodes.JNZ_ADDRESS:
+                    case opcodes.PRINT_DECIMAL:
+                        number = memory.load(++self.ip);
+                        if (!self.zero) {
+                            jump(number);
+                        } else {
+                            self.ip++;
+                        }
+                        break;
+                    case opcodes.PRINT_STRING:
                         number = memory.load(++self.ip);
                         if (!self.zero) {
                             jump(number);
@@ -597,10 +604,6 @@ var app = angular.module('ASMSimulator', []);
     $scope.isRunning = false;
     $scope.displayHex = true;
     $scope.displayInstr = true;
-    $scope.displayA = false;
-    $scope.displayB = false;
-    $scope.displayC = false;
-    $scope.displayD = false;
     $scope.speeds = [{speed: 1, desc: "1 HZ"},
                      {speed: 4, desc: "4 HZ"},
                      {speed: 8, desc: "8 HZ"},
@@ -608,7 +611,7 @@ var app = angular.module('ASMSimulator', []);
     $scope.speed = 4;
     $scope.outputStartIndex = 232;
 
-    $scope.code = "; Simple example\n;for (char i = 0; i < 50; ++i)\ni: db 0             ;char I = 0;\nloop: cmp [i], 50   ;check I against 50\njz end              ;goto end if i==50\ninc [i]             ;i++\njp loop             ;goto loop\nend:\n";
+    $scope.code = "; Simple example\n;for (char i = 0; i < 50; ++i)\njp loop\ni: db 0             ;char i = 0;\nloop: cmp [i], 50   ;check i against 50\njz end              ;goto end if i==50\ninc [i]             ;i++\njp loop             ;goto loop\nend:\n";
 
     $scope.reset = function () {
         cpu.reset();
@@ -721,8 +724,6 @@ var app = angular.module('ASMSimulator', []);
             return 'output-bg';
         } else if ($scope.isInstruction(index)) {
             return 'instr-bg';
-        } else if (index > cpu.sp && index <= cpu.maxSP) {
-            return 'stack-bg';
         } else {
             return '';
         }
@@ -731,16 +732,6 @@ var app = angular.module('ASMSimulator', []);
     $scope.getMemoryInnerCellCss = function (index) {
         if (index === cpu.ip) {
             return 'marker marker-ip';
-        } else if (index === cpu.sp) {
-            return 'marker marker-sp';
-        } else if (index === cpu.gpr[0] && $scope.displayA) {
-            return 'marker marker-a';
-        } else if (index === cpu.gpr[1] && $scope.displayB) {
-            return 'marker marker-b';
-        } else if (index === cpu.gpr[2] && $scope.displayC) {
-            return 'marker marker-c';
-        } else if (index === cpu.gpr[3] && $scope.displayD) {
-            return 'marker marker-d';
         } else {
             return '';
         }

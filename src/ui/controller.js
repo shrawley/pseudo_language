@@ -5,10 +5,6 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
     $scope.isRunning = false;
     $scope.displayHex = true;
     $scope.displayInstr = true;
-    $scope.displayA = false;
-    $scope.displayB = false;
-    $scope.displayC = false;
-    $scope.displayD = false;
     $scope.speeds = [{speed: 1, desc: "1 HZ"},
                      {speed: 4, desc: "4 HZ"},
                      {speed: 8, desc: "8 HZ"},
@@ -16,7 +12,7 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
     $scope.speed = 4;
     $scope.outputStartIndex = 232;
 
-    $scope.code = "; Simple example\n;for (char i = 0; i < 50; ++i)\ni: db 0             ;char I = 0;\nloop: cmp [i], 50   ;check I against 50\njz end              ;goto end if i==50\ninc [i]             ;i++\njp loop             ;goto loop\nend:\n";
+    $scope.code = "; Simple example\n;for (char i = 0; i < 50; ++i)\njp loop\ni: db 0             ;char i = 0;\nloop: cmp [i], 50   ;check i against 50\njz end              ;goto end if i==50\ninc [i]             ;i++\njp loop             ;goto loop\nend:\n";
 
     $scope.reset = function () {
         cpu.reset();
@@ -129,8 +125,6 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
             return 'output-bg';
         } else if ($scope.isInstruction(index)) {
             return 'instr-bg';
-        } else if (index > cpu.sp && index <= cpu.maxSP) {
-            return 'stack-bg';
         } else {
             return '';
         }
@@ -139,16 +133,6 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
     $scope.getMemoryInnerCellCss = function (index) {
         if (index === cpu.ip) {
             return 'marker marker-ip';
-        } else if (index === cpu.sp) {
-            return 'marker marker-sp';
-        } else if (index === cpu.gpr[0] && $scope.displayA) {
-            return 'marker marker-a';
-        } else if (index === cpu.gpr[1] && $scope.displayB) {
-            return 'marker marker-b';
-        } else if (index === cpu.gpr[2] && $scope.displayC) {
-            return 'marker marker-c';
-        } else if (index === cpu.gpr[3] && $scope.displayD) {
-            return 'marker marker-d';
         } else {
             return '';
         }

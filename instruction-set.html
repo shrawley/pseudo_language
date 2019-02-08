@@ -128,10 +128,11 @@ printf("%d", k);
 
 <b>in pseudo language:</b>
 <pre>
+jp start
 i: db 100       ;char i = 100;
 j: db 30        ;char j = 30;
 k: db 0         ;char k = 0;
-cp [k], [i]	;k = i;
+start: cp [k], [i]	;k = i;
 sub [k], [j]	;k -= j;
 printd [k]	;printf(“%d”, k);
 </pre>
@@ -141,6 +142,7 @@ printd [k]	;printf(“%d”, k);
 for (char i = 0; i < 50; ++i)
 </pre>
 <pre>
+jp loop
 i: db 0			;char i = 0;
 loop: cmp [i], 50	;check i against 50
 jz end			;goto end if i==50

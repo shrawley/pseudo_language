@@ -98,9 +98,9 @@ app.service('cpu', ['opcodes', 'memory', function(opcodes, memory) {
                         self.ip++;
                         break;
                     case opcodes.ADD_ADDRESS_TO_ADDRESS:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        number = memory.load(++self.ip);
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) + number));
+                        memTo = memory.load(++self.ip);
+                        memFrom = memory.load(++self.ip);
+                        memory.store(memTo, memFrom);
                         self.ip++;
                         break;
                     case opcodes.SUB_NUMBER_FROM_ADDRESS:
@@ -115,14 +115,16 @@ app.service('cpu', ['opcodes', 'memory', function(opcodes, memory) {
                         setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) - number));
                         self.ip++;
                         break;
-                    case opcodes.INC_ADDRESS:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) + 1));
+                    case opcodes.INC_ADDRESS: //fixed
+                        memTo = memory.load(++self.ip);
+                        number = memory.load(memTo);
+                        memory.store(memTo, number + 1);
                         self.ip++;
                         break;
-                    case opcodes.DEC_ADDRESS:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) - 1));
+                    case opcodes.DEC_ADDRESS: //fixed
+                        memTo = memory.load(++self.ip);
+                        number = memory.load(memTo);
+                        memory.store(memTo, number - 1);
                         self.ip++;
                         break;
                     case opcodes.CMP_ADDRESS_WITH_ADDRESS:
