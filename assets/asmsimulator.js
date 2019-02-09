@@ -238,34 +238,12 @@ var app = angular.module('ASMSimulator', []);
 
                                     code.push(opCode, p1.value);
                                     break;
-                                case 'JNO':
-                                    p1 = getValue(match[op1_group]);
-                                    checkNoExtraArg(instr, match[op2_group]);
-
-                                    if (p1.type === "number")
-                                        opCode = opcodes.JNC_ADDRESS;
-                                    else
-                                        throw instr + "does not support this operand";
-
-                                    code.push(opCode, p1.value);
-                                    break;
                                 case 'JZ':
                                     p1 = getValue(match[op1_group]);
                                     checkNoExtraArg(instr, match[op2_group]);
 
                                     if (p1.type === "number")
                                         opCode = opcodes.JZ_ADDRESS;
-                                    else
-                                        throw instr + " does not support this operand";
-
-                                    code.push(opCode, p1.value);
-                                    break;
-                                case 'JNZ':
-                                    p1 = getValue(match[op1_group]);
-                                    checkNoExtraArg(instr, match[op2_group]);
-
-                                    if (p1.type === "number")
-                                        opCode = opcodes.JNZ_ADDRESS;
                                     else
                                         throw instr + " does not support this operand";
 
@@ -414,55 +392,65 @@ var app = angular.module('ASMSimulator', []);
                         break;
                     case opcodes.CP_ADDRESS_TO_ADDRESS:
                         memTo = memory.load(++self.ip);
-                        memFrom = memory.load(++self.ip);
+                        memFrom = memory.load(memory.load(++self.ip));
                         memory.store(memTo, memFrom);
                         self.ip++;
                         break;
-                    case opcodes.ADD_NUMBER_TO_ADDRESS: //TODO: continue here
-                        regTo = checkGPR_SP(memory.load(++self.ip));
+                    case opcodes.ADD_NUMBER_TO_ADDRESS:
+                        memTo = memory.load(++self.ip);
+                        srcNum = memory.load(memTo);
                         number = memory.load(++self.ip);
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) + number));
+                        memory.store(memTo, srcNum + number);
                         self.ip++;
                         break;
                     case opcodes.ADD_ADDRESS_TO_ADDRESS:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        number = memory.load(++self.ip);
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) + number));
+                        memTo = memory.load(++self.ip);
+                        memFrom = memory.load(++self.ip);
+                        srcNum = memory.load(memTo);
+                        srcNum1 = memory.load(memFrom);
+                        memory.store(memTo, srcNum + srcNum1);
                         self.ip++;
                         break;
                     case opcodes.SUB_NUMBER_FROM_ADDRESS:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
+                        memTo = memory.load(++self.ip);
+                        destNum = memory.load(memTo);
                         number = memory.load(++self.ip);
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) - number));
+                        memory.store(memTo, checkOperation(destNum - number));
                         self.ip++;
                         break;
                     case opcodes.SUB_ADDRESS_FROM_ADDRESS:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        number = memory.load(++self.ip);
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) - number));
+                        memTo = memory.load(++self.ip);
+                        memFrom = memory.load(++self.ip);
+                        number1 = memory.load(memTo);
+                        number2 = memory.load(memFrom);
+                        memory.store(memTo, checkOperation(number1 - number2));
                         self.ip++;
                         break;
                     case opcodes.INC_ADDRESS:
                         memTo = memory.load(++self.ip);
                         number = memory.load(memTo);
-                        memory.store(memTo, number + 1);
+                        memory.store(memTo, ++number);
                         self.ip++;
                         break;
                     case opcodes.DEC_ADDRESS:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        setGPR_SP(regTo,checkOperation(getGPR_SP(regTo) - 1));
+                        memTo = memory.load(++self.ip);
+                        number = memory.load(memTo);
+                        memory.store(memTo, --number);
                         self.ip++;
                         break;
                     case opcodes.CMP_ADDRESS_WITH_ADDRESS:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
+                        memTo = memory.load(++self.ip);
                         memFrom = memory.load(++self.ip);
-                        checkOperation(getGPR_SP(regTo) - memory.load(memFrom));
+                        number1 = memory.load(memTo);
+                        number2 = memory.load(memFrom);
+                        checkOperation(number1 - number2);
                         self.ip++;
                         break;
                     case opcodes.CMP_NUMBER_WITH_ADDRESS:
-                        regTo = checkGPR_SP(memory.load(++self.ip));
-                        number = memory.load(++self.ip);
-                        checkOperation(getGPR_SP(regTo) - number);
+                        memTo = memory.load(++self.ip);
+                        number1 = memory.load(memTo);
+                        number2 = memory.load(++self.ip);
+                        checkOperation(number1 - number2);
                         self.ip++;
                         break;
                     case opcodes.JP_ADDRESS:
@@ -477,14 +465,6 @@ var app = angular.module('ASMSimulator', []);
                             self.ip++;
                         }
                         break;
-                    case opcodes.JNC_ADDRESS:
-                        number = memory.load(++self.ip);
-                        if (!self.carry) {
-                            jump(number);
-                        } else {
-                            self.ip++;
-                        }
-                        break;
                     case opcodes.JZ_ADDRESS:
                         number = memory.load(++self.ip);
                         if (self.zero) {
@@ -493,21 +473,13 @@ var app = angular.module('ASMSimulator', []);
                             self.ip++;
                         }
                         break;
-                    case opcodes.PRINT_DECIMAL:
+                    case opcodes.PRINT_DECIMAL://continue here, needs debug
                         number = memory.load(++self.ip);
-                        if (!self.zero) {
-                            jump(number);
-                        } else {
-                            self.ip++;
-                        }
+                        addr = memory.load(self.sp);
+                        memory.store(addr, number);
                         break;
                     case opcodes.PRINT_STRING:
                         number = memory.load(++self.ip);
-                        if (!self.zero) {
-                            jump(number);
-                        } else {
-                            self.ip++;
-                        }
                         break;
                     default:
                         throw "Invalid op code: " + instr;
@@ -588,11 +560,9 @@ var app = angular.module('ASMSimulator', []);
         CMP_NUMBER_WITH_ADDRESS: 10,
         JP_ADDRESS: 11,
         JC_ADDRESS: 12,
-        JNC_ADDRESS: 13,
-        JZ_ADDRESS: 14,
-        JNZ_ADDRESS: 15,
-        PRINT_STRING: 16,
-        PRINT_DECIMAL: 17
+        JZ_ADDRESS: 13,
+        PRINT_STRING: 14,
+        PRINT_DECIMAL: 15
     };
 
     return opcodes;

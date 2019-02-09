@@ -237,34 +237,12 @@ app.service('assembler', ['opcodes', function (opcodes) {
 
                                     code.push(opCode, p1.value);
                                     break;
-                                case 'JNO':
-                                    p1 = getValue(match[op1_group]);
-                                    checkNoExtraArg(instr, match[op2_group]);
-
-                                    if (p1.type === "number")
-                                        opCode = opcodes.JNC_ADDRESS;
-                                    else
-                                        throw instr + "does not support this operand";
-
-                                    code.push(opCode, p1.value);
-                                    break;
                                 case 'JZ':
                                     p1 = getValue(match[op1_group]);
                                     checkNoExtraArg(instr, match[op2_group]);
 
                                     if (p1.type === "number")
                                         opCode = opcodes.JZ_ADDRESS;
-                                    else
-                                        throw instr + " does not support this operand";
-
-                                    code.push(opCode, p1.value);
-                                    break;
-                                case 'JNZ':
-                                    p1 = getValue(match[op1_group]);
-                                    checkNoExtraArg(instr, match[op2_group]);
-
-                                    if (p1.type === "number")
-                                        opCode = opcodes.JNZ_ADDRESS;
                                     else
                                         throw instr + " does not support this operand";
 
