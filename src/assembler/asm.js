@@ -248,22 +248,22 @@ app.service('assembler', ['opcodes', function (opcodes) {
 
                                     code.push(opCode, p1.value);
                                     break;
-                                case 'PRINTD':
+                                case 'PRND':
                                     p1 = getValue(match[op1_group]);
                                     checkNoExtraArg(instr, match[op2_group]);
 
-                                    if (p1.type === "number")
+                                    if (p1.type === "address")
                                         opCode = opcodes.PRINT_DECIMAL;
                                     else
                                         throw instr + " does not support this operand";
 
                                     code.push(opCode, p1.value);
                                     break;
-                                case 'PRINTS':
+                                case 'PRNS':
                                     p1 = getValue(match[op1_group]);
                                     checkNoExtraArg(instr, match[op2_group]);
 
-                                    if (p1.type === "number")
+                                    if (p1.type === "address")
                                         opCode = opcodes.PRINT_STRING;
                                     else
                                         throw instr + " does not support this operand";

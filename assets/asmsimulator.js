@@ -249,22 +249,22 @@ var app = angular.module('ASMSimulator', []);
 
                                     code.push(opCode, p1.value);
                                     break;
-                                case 'PRINTD':
+                                case 'PRND':
                                     p1 = getValue(match[op1_group]);
                                     checkNoExtraArg(instr, match[op2_group]);
 
-                                    if (p1.type === "number")
+                                    if (p1.type === "address")
                                         opCode = opcodes.PRINT_DECIMAL;
                                     else
                                         throw instr + " does not support this operand";
 
                                     code.push(opCode, p1.value);
                                     break;
-                                case 'PRINTS':
+                                case 'PRNS':
                                     p1 = getValue(match[op1_group]);
                                     checkNoExtraArg(instr, match[op2_group]);
 
-                                    if (p1.type === "number")
+                                    if (p1.type === "address")
                                         opCode = opcodes.PRINT_STRING;
                                     else
                                         throw instr + " does not support this operand";
@@ -474,12 +474,24 @@ var app = angular.module('ASMSimulator', []);
                         }
                         break;
                     case opcodes.PRINT_DECIMAL://continue here, needs debug
-                        number = memory.load(++self.ip);
-                        addr = memory.load(self.sp);
-                        memory.store(addr, number);
+                        addressFrom = memory.load(++self.ip);
+                        number = memory.load(addressFrom);
+                        addressTo = self.sp + 1;
+                        memory.store(addressTo, number);
+                        self.ip++;
                         break;
                     case opcodes.PRINT_STRING:
-                        number = memory.load(++self.ip);
+                        addressFrom = memory.load(++self.ip);
+                        addressTo = self.sp + 1;
+                        count = 0;
+                        addr = addressFrom;
+                        value = memory.load(addr++);
+                        while (count < 24 && value > 0) {
+                          ++count;
+                          value = memory.load(addr++);
+                        }
+                        memory.copy(addressTo, addressFrom, count);
+                        self.ip++;
                         break;
                     default:
                         throw "Invalid op code: " + instr;
@@ -531,6 +543,23 @@ var app = angular.module('ASMSimulator', []);
 
             self.lastAccess = address;
             self.data[address] = value;
+        },
+        copy: function (addressTo, addressFrom, count) {
+            var self = this;
+
+            if (addressTo < 0 || addressTo >= self.data.length || addressTo + count >= self.data.length) {
+                throw "Memory access violation at " + addressTo;
+            }
+            else if (addressFrom < 0 || addressFrom >= self.data.length || addressFrom + count >= self.data.length) {
+                throw "Memory access violation at " + addressFrom;
+            }
+            else if (addressFrom > addressTo && addressFrom < addressTo + count) {
+                throw "Memory access violation at " + addressTo;
+            }
+            for (i = 0; i < count; ++i) {
+              self.data[addressTo + i] = self.data[addressFrom + i];
+            }
+            self.lastAccess = addressTo + count;
         },
         reset: function () {
             var self = this;

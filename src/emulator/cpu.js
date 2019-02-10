@@ -169,12 +169,24 @@ app.service('cpu', ['opcodes', 'memory', function(opcodes, memory) {
                         }
                         break;
                     case opcodes.PRINT_DECIMAL://continue here, needs debug
-                        number = memory.load(++self.ip);
-                        addr = memory.load(self.sp);
-                        memory.store(addr, number);
+                        addressFrom = memory.load(++self.ip);
+                        number = memory.load(addressFrom);
+                        addressTo = self.sp + 1;
+                        memory.store(addressTo, number);
+                        self.ip++;
                         break;
                     case opcodes.PRINT_STRING:
-                        number = memory.load(++self.ip);
+                        addressFrom = memory.load(++self.ip);
+                        addressTo = self.sp + 1;
+                        count = 0;
+                        addr = addressFrom;
+                        value = memory.load(addr++);
+                        while (count < 24 && value > 0) {
+                          ++count;
+                          value = memory.load(addr++);
+                        }
+                        memory.copy(addressTo, addressFrom, count);
+                        self.ip++;
                         break;
                     default:
                         throw "Invalid op code: " + instr;
