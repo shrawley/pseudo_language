@@ -39,6 +39,18 @@ app.service('memory', [function () {
             }
             self.lastAccess = addressTo + count;
         },
+        copyString: function (addressTo, str) {
+            var self = this;
+            var count = str.length;
+            if (addressTo < 0 || addressTo >= self.data.length || addressTo + count >= self.data.length) {
+                throw "Memory access violation at " + addressTo;
+            }
+            for (i = 0; i < count; ++i) {
+              self.data[addressTo + i] = self.data[addressFrom + i];
+            }
+            self.lastAccess = addressTo + count;
+        },
+
         reset: function () {
             var self = this;
 
