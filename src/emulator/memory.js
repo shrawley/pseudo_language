@@ -46,7 +46,17 @@ app.service('memory', [function () {
                 throw "Memory access violation at " + addressTo;
             }
             for (i = 0; i < count; ++i) {
-              self.data[addressTo + i] = self.data[addressFrom + i];
+              var n = str.substr(i, 1);
+              if (n === '-')
+              {
+                  n = 45;
+              }
+              else if (n >= '0' || n <= '9')
+              {
+                  n = parseInt(n, 10) + 48;
+              }
+              console.log(n);
+              self.data[addressTo + i] = n;
             }
             self.lastAccess = addressTo + count;
         },

@@ -477,7 +477,7 @@ var app = angular.module('ASMSimulator', []);
                         addressFrom = memory.load(++self.ip);
                         number = memory.load(addressFrom);
                         addressTo = self.sp + 1;
-                        memory.store(addressTo, number);
+                        memory.copyString(addressTo, number.toString());
                         self.ip++;
                         break;
                     case opcodes.PRINT_STRING:
@@ -561,6 +561,28 @@ var app = angular.module('ASMSimulator', []);
             }
             self.lastAccess = addressTo + count;
         },
+        copyString: function (addressTo, str) {
+            var self = this;
+            var count = str.length;
+            if (addressTo < 0 || addressTo >= self.data.length || addressTo + count >= self.data.length) {
+                throw "Memory access violation at " + addressTo;
+            }
+            for (i = 0; i < count; ++i) {
+              var n = str.substr(i, 1);
+              if (n === '-')
+              {
+                  n = 45;
+              }
+              else if (n >= '0' || n <= '9')
+              {
+                  n = parseInt(n, 10) + 48;
+              }
+              console.log(n);
+              self.data[addressTo + i] = n;
+            }
+            self.lastAccess = addressTo + count;
+        },
+
         reset: function () {
             var self = this;
 

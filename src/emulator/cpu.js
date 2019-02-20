@@ -172,7 +172,7 @@ app.service('cpu', ['opcodes', 'memory', function(opcodes, memory) {
                         addressFrom = memory.load(++self.ip);
                         number = memory.load(addressFrom);
                         addressTo = self.sp + 1;
-                        memory.store(addressTo, number);
+                        memory.copyString(addressTo, number.toString());
                         self.ip++;
                         break;
                     case opcodes.PRINT_STRING:
