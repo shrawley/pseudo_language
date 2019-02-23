@@ -124,13 +124,13 @@ app.service('cpu', ['opcodes', 'memory', function(opcodes, memory) {
                     case opcodes.INC_ADDRESS:
                         memTo = memory.load(++self.ip);
                         number = memory.load(memTo);
-                        memory.store(memTo, ++number);
+                        memory.store(memTo, checkOperation(++number));
                         self.ip++;
                         break;
                     case opcodes.DEC_ADDRESS:
                         memTo = memory.load(++self.ip);
                         number = memory.load(memTo);
-                        memory.store(memTo, --number);
+                        memory.store(memTo, checkOperation(--number));
                         self.ip++;
                         break;
                     case opcodes.CMP_ADDRESS_WITH_ADDRESS:
@@ -172,12 +172,14 @@ app.service('cpu', ['opcodes', 'memory', function(opcodes, memory) {
                         addressFrom = memory.load(++self.ip);
                         number = memory.load(addressFrom);
                         addressTo = self.sp + 1;
+                        memory.clear(addressTo, 23);
                         memory.copyString(addressTo, number.toString());
                         self.ip++;
                         break;
                     case opcodes.PRINT_STRING:
                         addressFrom = memory.load(++self.ip);
                         addressTo = self.sp + 1;
+                        memory.clear(addressTo, 23);
                         count = 0;
                         addr = addressFrom;
                         value = memory.load(addr++);

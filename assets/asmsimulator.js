@@ -429,13 +429,13 @@ var app = angular.module('ASMSimulator', []);
                     case opcodes.INC_ADDRESS:
                         memTo = memory.load(++self.ip);
                         number = memory.load(memTo);
-                        memory.store(memTo, ++number);
+                        memory.store(memTo, checkOperation(++number));
                         self.ip++;
                         break;
                     case opcodes.DEC_ADDRESS:
                         memTo = memory.load(++self.ip);
                         number = memory.load(memTo);
-                        memory.store(memTo, --number);
+                        memory.store(memTo, checkOperation(--number));
                         self.ip++;
                         break;
                     case opcodes.CMP_ADDRESS_WITH_ADDRESS:
@@ -477,12 +477,14 @@ var app = angular.module('ASMSimulator', []);
                         addressFrom = memory.load(++self.ip);
                         number = memory.load(addressFrom);
                         addressTo = self.sp + 1;
+                        memory.clear(addressTo, 23);
                         memory.copyString(addressTo, number.toString());
                         self.ip++;
                         break;
                     case opcodes.PRINT_STRING:
                         addressFrom = memory.load(++self.ip);
                         addressTo = self.sp + 1;
+                        memory.clear(addressTo, 23);
                         count = 0;
                         addr = addressFrom;
                         value = memory.load(addr++);
@@ -543,6 +545,17 @@ var app = angular.module('ASMSimulator', []);
 
             self.lastAccess = address;
             self.data[address] = value;
+        },
+        clear: function (addressTo, count) {
+          var self = this;
+
+          if (addressTo < 0 || addressTo >= self.data.length || addressTo + count >= self.data.length) {
+              throw "Memory access violation at " + addressTo;
+          }
+          for (i = 0; i < count; ++i) {
+            self.data[addressTo + i] = 0;
+          }
+          self.lastAccess = addressTo + count;
         },
         copy: function (addressTo, addressFrom, count) {
             var self = this;

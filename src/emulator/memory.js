@@ -22,6 +22,17 @@ app.service('memory', [function () {
             self.lastAccess = address;
             self.data[address] = value;
         },
+        clear: function (addressTo, count) {
+          var self = this;
+
+          if (addressTo < 0 || addressTo >= self.data.length || addressTo + count >= self.data.length) {
+              throw "Memory access violation at " + addressTo;
+          }
+          for (i = 0; i < count; ++i) {
+            self.data[addressTo + i] = 0;
+          }
+          self.lastAccess = addressTo + count;
+        },
         copy: function (addressTo, addressFrom, count) {
             var self = this;
 

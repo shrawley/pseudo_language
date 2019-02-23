@@ -17,12 +17,19 @@ dec [a1]
 cp [a1], 1
 dec [a1]
 dec [a1]
+inc [a1]
+dec [a1]
 cmp [a1], 100
+jz start
 cmp [a1], 255
-prns [c1]
+jz equal
+inc [a1]
+equal: prns [c1]
 prnd [a1]
-jp addr1
-jz addr
-jo addr
+cp [a1], 2
+cmp [a1], 3
+jo bigger
+inc [a1]
+bigger: jp addr1
 addr1:
 addr:
