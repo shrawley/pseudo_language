@@ -9,29 +9,151 @@
     <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
 </head>
 <body ng-controller="Ctrl">
-    <a href="https://github.com/shrawley/assembler-simulator"><img style="z-index:1001;position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub"></a>
+    <a href="https://github.com/shrawley/pseudo_language"><img style="z-index:1001;position: absolute; top: 0; right: 0; border: 0;" src="https://s3.amazonaws.com/github/ribbons/forkme_right_red_aa0000.png" alt="Fork me on GitHub"></a>
     <nav class="navbar navbar-inverse" role="navigation" style="background-color:#428BCA;border:0px;border-radius:0px;">
         <div class="container">
-            <div class="navbar-header">
-                <div class="btn-group">
-                    <button type="button" class="btn btn-success navbar-btn" ng-click="run()" ng-hide="isRunning"><span class="glyphicon glyphicon-play"></span> Run</button>
-                    <button type="button" class="btn btn-default navbar-btn" ng-click="stop()" ng-show="isRunning"><span class="glyphicon glyphicon-stop"></span> Stop</button>
-                    <button type="button" class="btn btn-default navbar-btn" ng-click="executeStep()" ng-disabled="isRunning"><span class="glyphicon glyphicon-forward"></span> Step</button>
-                </div>
-                <button type="button" class="btn btn-default navbar-btn" ng-click="reset()">Reset</button>
-            </div>
             <div class="navbar-header navbar-right">
                 <a class="navbar-brand" style="color:#FFFFFF">Simple Pseudo Language</a>
             </div>
         </div>
     </nav>
-    <div class="container">
+    <div class="container" style="width:auto">
         <div class="alert alert-danger" ng-hide="error === ''">{{ error }}</div>
         <div class="row">
-            <div class="col-lg-7 col-md-6">
+            <div class="col-lg-5 col-md-4">
                 <div class="panel panel-default">
                     <div class="panel-heading">
-                        <h4 class="panel-title">Code <small>(<a href="./instruction-set.html" target="_blank" style="color: #337AB7">Instruction Set</a>)</small></h4>
+                        <h4 class="panel-title">Simple Pseudo Language - Instruction Set Help</h4>
+                    </div>
+                    <div class="panel-body">
+                        <h4>Introduction</h4>
+                        <p>This simulator provides a simplified assembler syntax.</p>
+                        <p>The simulator consists of a 8-bit cpu and 256 bytes of memory. All instructions (code) and variables (data) needs to fit inside the memory. For simplicity every instruction (and operand) is 1 byte. Therefore a MOV instruction will use 3 bytes of memory. The simulator provides a console output which is memory mapped from 0xE8 to 0xFF. Memory mapped means that every value written to this memory block is visible on the console.</p>
+                        <h4>Syntax</h4>
+                        <p>The syntax is similar as most assemblers are using. Every instruction must be on their own line. Labels are optional and must either start with a letter or a dot (.) and end with a colon.</p>
+                        <pre>label: instruction operands	; Comment</pre>
+                        <p>Valid number formats for constants are:</p>
+                        <pre>
+Decimal: 200
+Decimal: 200d
+Hex: 0xA4
+Octal: 0o48
+Binary: 101b
+                        </pre>
+                        <p>It is possible to define a number using a character or multiple numbers (see instruction <i>DB</i>) by using a string.</p>
+                        <pre>
+Character: 'A'
+String: "Hello World!"
+                        </pre>
+                        <p>Operands can either be a memory address or a constant. Instead of defining an address as a constant or by using a register you can use labels. The assembler will then replace the label with the corresponding constant.</p>
+                        <pre>
+Address using a constant: [100]
+Address using a label: label
+Constant: Any number between 0..255 (8bit unsigned)
+                        </pre>
+                        <h4>CP - Copy a value</h4>
+                        <p>Copies a value from <i>src</i> to <i>dest</i>.</p>
+                        <pre>
+CP address_dest, address_src
+CP address_dest, constant_src
+                        </pre>
+                        <h4>DB - Variable</h4>
+                        <p>Defines a variable. A variable can either be a single number, character or a string.</p>
+                        <pre>
+DB constant
+                        </pre>
+                        <h4>Math operations</h4>
+                        <b>Addition and Subtraction</b>
+                        <p>Adds two numbers together or subtract one number form another. This operations will modify the overflow and zero flag.</p>
+                        <pre>
+ADD address_dest, constant
+ADD address_dest, address_src
+SUB address_dest, constant
+SUB address_dest, address_src
+                        </pre>
+                        <b>Increment and Decrement</b>
+                        <p>Increments or decrements a register by one. This operations will modify the overflow and zero flag.</p>
+                        <pre>
+INC address
+DEC address
+                        </pre>
+                        <h4>CMP - Compare</h4>
+                        <p>Compares two values by subtracting value at address2 or a constant from value stored at address1, the result is not stored, negative values will cause an overflow. Use this instruction before a conditional jump.</p>
+                        <pre>
+CMP address1, address2
+CMP address, constant
+                        </pre>
+                        <h4>Jumps</h4>
+                        <b>JP - Unconditional jump</b>
+                        <p>Let the instruction pointer do a unconditional jump to the defined address.</p>
+                        <pre>
+JP address
+                        </pre>
+                        <b>Conditional jumps</b>
+                        <p>Let the instruction pointer do a conditional jump to the defined address. See the table below for the available conditions.</p>
+                        <table class="table table-condensed table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Instruction</th>
+                                    <th>Description</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>JO</td>
+                                    <td>Jump if overflow</td>
+                                </tr>
+                                <tr>
+                                    <td>JZ</td>
+                                    <td>Jump if zero or equal</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <b>Print Command</b>
+                        <p>Prints a string or an integer.</p>
+                        <pre>
+PRNS [address]
+PRND [address]
+                        </pre>
+                        <b>Code Example:</b>
+                        <pre>
+char i = 100;
+char j = 30;
+char k = 0;
+k = i - j;
+printf("%d", k);
+                        </pre>
+                        <b>in pseudo language:</b>
+                        <pre>
+jp start
+i: db 100       ;char i = 100;
+j: db 30        ;char j = 30;
+k: db 0         ;char k = 0;
+start: cp [k], [i]	;k = i;
+sub [k], [j]	;k -= j;
+prnd [k]	;printf(“%d”, k);
+                        </pre>
+                        <b>loop example:</b>
+                        <pre>
+for (char i = 0; i < 50; ++i)
+                        </pre>
+                        <pre>
+jp loop
+i: db 0			;char i = 0;
+loop: cmp [i], 50	;check i against 50
+jz end			;goto end if i==50
+inc [i]			;i++
+jp loop			;goto loop
+end:
+                        </pre>
+                    </div>
+                </div>
+            </div>
+            <div class="clearfix visible-xs visible-sm"></div>
+            <div class="col-lg-4 col-md-6">
+                <div class="panel panel-default">
+                    <div class="panel-heading">
+                        <h4 class="panel-title">Code</h4>
                     </div>
                     <div class="panel-body">
                         <form role="form">
@@ -43,12 +165,18 @@
                                       select-line
                                       ng-model="code"></textarea>
                             <button type="button" class="btn btn-default" ng-click="assemble()">Assemble</button>
+                            <div class="btn-group">
+                                <button type="button" class="btn btn-success navbar-btn" ng-click="run()" ng-hide="isRunning"><span class="glyphicon glyphicon-play"></span> Run</button>
+                                <button type="button" class="btn btn-default navbar-btn" ng-click="stop()" ng-show="isRunning"><span class="glyphicon glyphicon-stop"></span> Stop</button>
+                                <button type="button" class="btn btn-default navbar-btn" ng-click="executeStep()" ng-disabled="isRunning"><span class="glyphicon glyphicon-forward"></span> Step</button>
+                            </div>
+                            <button type="button" class="btn btn-default navbar-btn" ng-click="reset()">Reset</button>
                         </form>
                     </div>
                 </div>
             </div>
             <div class="clearfix visible-xs visible-sm"></div>
-            <div class="col-lg-5 col-md-6">
+            <div class="col-lg-3 col-md-4">
                 <div class="panel panel-default">
                     <div class="panel-heading">
                         <h4 class="panel-title">Output</h4>
