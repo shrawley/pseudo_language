@@ -1,7 +1,7 @@
 # Simple Pseudo Language
 A simulator which provides a simplified assembler syntax. Press Help inside the simulator to see an overview about the supported instructions.
 
-####<a href="http://schweigi.github.io/assembler-simulator/index.html" target="_blank">TRY IT ONLINE</a>
+####<a href="https://shrawley.github.io/pseudo_language/index.html" target="_blank">TRY IT ONLINE</a>
 
 ### Features
 - 8-bit CPU
