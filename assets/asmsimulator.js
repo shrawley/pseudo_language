@@ -96,9 +96,6 @@ var app = angular.module('ASMSimulator', []);
                 if (upperLabel in normalizedLabels)
                     throw "Duplicate label: " + label;
 
-                if (upperLabel === "A" || upperLabel === "B" || upperLabel === "C" || upperLabel === "D")
-                    throw "Label contains keyword: " + upperLabel;
-
                 labels[label] = code.length;
             };
 
