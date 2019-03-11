@@ -9,7 +9,7 @@ app.controller('Ctrl', ['$document', '$scope', '$timeout', 'cpu', 'memory', 'ass
                      {speed: 4, desc: "4 HZ"},
                      {speed: 8, desc: "8 HZ"},
                      {speed: 16, desc: "16 HZ"}];
-    $scope.speed = 4;
+    $scope.speed = 16;
     $scope.outputStartIndex = 232;
 
     $scope.code = "; Simple example\n;for (char i = 0; i < 50; ++i)\njp loop\ni: db 0             ;char i = 0;\nloop: cmp [i], 50   ;check i against 50\njz end              ;goto end if i==50\ninc [i]             ;i++\njp loop             ;goto loop\nend:\n";
