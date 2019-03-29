@@ -5,7 +5,7 @@ var app = angular.module('ASMSimulator', []);
             // Use https://www.debuggex.com/
             // Matches: "label: INSTRUCTION (["')OPERAND1(]"'), (["')OPERAND2(]"')
             // GROUPS:      1       2               3                    7
-            var regex = /^[\t ]*(?:([.A-Za-z]\w*)[:])?(?:[\t ]*([A-Za-z]{2,4})(?:[\t ]+(\[(\w+((\+|-)\d+)?)\]|\".+?\"|\'.+?\'|[.A-Za-z0-9]\w*)(?:[\t ]*[,][\t ]*(\[(\w+((\+|-)\d+)?)\]|\".+?\"|\'.+?\'|[.A-Za-z0-9]\w*))?)?)?/;
+            var regex = /^[\t ]*(?:([.A-Za-z]\w*)[:])?(?:[\t ]*([A-Za-z]{2,4})(?:[\t ]+(\[(\w+((\+|-)\d+)?)\]|\".+?\"|\'.+?\'|[.A-Za-z0-9\+]\w*)(?:[\t ]*[,][\t ]*(\[(\w+((\+|-)\d+)?)\]|\".+?\"|\'.+?\'|[.A-Za-z0-9\+]\w*))?)?)?/;
 
             // Regex group indexes for operands
             var op1_group = 3;
@@ -147,6 +147,30 @@ var app = angular.module('ASMSimulator', []);
                                         opCode = opcodes.CP_ADDRESS_TO_ADDRESS;
                                     else
                                         throw "CP does not support this operands";
+
+                                    code.push(opCode, p1.value, p2.value);
+                                    break;
+                                case 'CTP':
+                                    p1 = getValue(match[op1_group]);
+                                    p2 = getValue(match[op2_group]);
+
+                                    if (p1.type === "address" && p2.type === "number")
+                                        opCode = opcodes.CTP_NUMBER_TO_ADDRESS;
+                                    else if (p1.type === "address" && p2.type === "address")
+                                        opCode = opcodes.CTP_ADDRESS_TO_ADDRESS;
+                                    else
+                                        throw "CTP does not support this operands";
+
+                                    code.push(opCode, p1.value, p2.value);
+                                    break;
+                                case 'CFP':
+                                    p1 = getValue(match[op1_group]);
+                                    p2 = getValue(match[op2_group]);
+
+                                    if (p1.type === "address" && p2.type === "address")
+                                        opCode = opcodes.CFP_ADDRESS_TO_ADDRESS;
+                                    else
+                                        throw "CFP does not support this operands";
 
                                     code.push(opCode, p1.value, p2.value);
                                     break;
@@ -393,6 +417,24 @@ var app = angular.module('ASMSimulator', []);
                         memory.store(memTo, memFrom);
                         self.ip++;
                         break;
+                    case opcodes.CTP_ADDRESS_TO_ADDRESS:
+                        addrTo = memory.load(memory.load(++self.ip));
+                        memFrom = memory.load(memory.load(++self.ip));
+                        memory.store(addrTo, memFrom);
+                        self.ip++;
+                        break;
+                    case opcodes.CTP_NUMBER_TO_ADDRESS:
+                        addrTo = memory.load(memory.load(++self.ip));
+                        number = memory.load(++self.ip);
+                        memory.store(addrTo, number);
+                        self.ip++;
+                        break;
+                    case opcodes.CFP_ADDRESS_TO_ADDRESS:
+                        memTo = memory.load(++self.ip);
+                        addrFrom = memory.load(memory.load(memory.load(++self.ip)));
+                        memory.store(memTo, addrFrom);
+                        self.ip++;
+                        break;
                     case opcodes.ADD_NUMBER_TO_ADDRESS:
                         memTo = memory.load(++self.ip);
                         srcNum = memory.load(memTo);
@@ -623,7 +665,10 @@ var app = angular.module('ASMSimulator', []);
         JC_ADDRESS: 12,
         JZ_ADDRESS: 13,
         PRINT_STRING: 14,
-        PRINT_DECIMAL: 15
+        PRINT_DECIMAL: 15,
+        CFP_ADDRESS_TO_ADDRESS: 16,
+        CTP_NUMBER_TO_ADDRESS: 17,
+        CTP_ADDRESS_TO_ADDRESS: 18
     };
 
     return opcodes;

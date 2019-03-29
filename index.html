@@ -28,7 +28,7 @@
                     <div class="panel-body" style="max-height:799px; overflow-y:auto;">
                         <h4>Introduction</h4>
                         <p>This simulator provides a simplified assembler syntax.</p>
-                        <p>The simulator consists of a 8-bit cpu and 256 bytes of memory. All instructions (code) and variables (data) needs to fit inside the memory. For simplicity every instruction (and operand) is 1 byte. Therefore a MOV instruction will use 3 bytes of memory. The simulator provides a console output which is memory mapped from 0xE8 to 0xFF. Memory mapped means that every value written to this memory block is visible on the console.</p>
+                        <p>The simulator consists of a 8-bit cpu and 256 bytes of memory. All instructions (code) and variables (data) needs to fit inside the memory. For simplicity every instruction (and operand) is 1 byte. Therefore a CP instruction will use 3 bytes of memory. The simulator provides a console output which is memory mapped from 0xE8 to 0xFF. Memory mapped means that every value written to this memory block is visible on the console.</p>
                         <h4>Syntax</h4>
                         <p>The syntax is similar as most assemblers are using. Every instruction must be on their own line. Labels are optional and must either start with a letter or a dot (.) and end with a colon.</p>
                         <pre>label: instruction operands	; Comment</pre>
@@ -45,10 +45,11 @@ Binary: 101b
 Character: 'A'
 String: "Hello World!"
                         </pre>
-                        <p>Operands can either be a memory address or a constant. Instead of defining an address as a constant or by using a register you can use labels. The assembler will then replace the label with the corresponding constant.</p>
+                        <p>Operands can either be a memory address or a constant. Instead of defining an address as a constant you can use labels. The assembler will then replace the label with the corresponding constant.</p>
                         <pre>
 Address using a constant: [100]
 Address using a label: label
+Value stored at an address using a label: [label]
 Constant: Any number between 0..255 (8bit unsigned)
                         </pre>
                         <h4>CP - Copy a value</h4>
@@ -61,6 +62,40 @@ CP address_dest, constant_src
                         <p>Defines a variable. A variable can either be a single number, character or a string.</p>
                         <pre>
 DB constant
+                        </pre>
+                        <h4>Pointer operations</h4>
+                        <p>A pointer is an address to a saved address. Pointers can be used to access calculated addresses, for example when working with arrays.</p>
+                        <pre>
+Consider the following code:
+pointer: db 0
+dest: db 0
+array: db 1
+db 2
+db 3
+db 4
+db 5
+
+Value 3 is stored in the memory addressed as array + 2.
+To access that memory we need to calculate the address first.
+Let's do this in the variable 'pointer'.
+
+CP [pointer], array     ;copy 'array' address to the memory addressed by 'pointer'.
+                        ;The 'pointer' now points to the array address
+ADD [pointer], 2        ;calculate the address for the 3-rd array element
+CFP [dest], [pointer]
+
+'dest' now has 3.
+                        </pre>
+                        <b>CFP - Copy from a pointer</b>
+                        <p>Copy a value from a poiter to the destination memory address.</p>
+                        <pre>
+CFP address_dest, [pointer]
+                        </pre>
+                        <b>CTP - Copy to a pointer</b>
+                        <p>Copy a value to a pointer.</p>
+                        <pre>
+CTP [pointer], address_src
+CTP [pointer], constant_src
                         </pre>
                         <h4>Math operations</h4>
                         <b>Addition and Subtraction</b>

@@ -91,6 +91,24 @@ app.service('cpu', ['opcodes', 'memory', function(opcodes, memory) {
                         memory.store(memTo, memFrom);
                         self.ip++;
                         break;
+                    case opcodes.CTP_ADDRESS_TO_ADDRESS:
+                        addrTo = memory.load(memory.load(++self.ip));
+                        memFrom = memory.load(memory.load(++self.ip));
+                        memory.store(addrTo, memFrom);
+                        self.ip++;
+                        break;
+                    case opcodes.CTP_NUMBER_TO_ADDRESS:
+                        addrTo = memory.load(memory.load(++self.ip));
+                        number = memory.load(++self.ip);
+                        memory.store(addrTo, number);
+                        self.ip++;
+                        break;
+                    case opcodes.CFP_ADDRESS_TO_ADDRESS:
+                        memTo = memory.load(++self.ip);
+                        addrFrom = memory.load(memory.load(memory.load(++self.ip)));
+                        memory.store(memTo, addrFrom);
+                        self.ip++;
+                        break;
                     case opcodes.ADD_NUMBER_TO_ADDRESS:
                         memTo = memory.load(++self.ip);
                         srcNum = memory.load(memTo);

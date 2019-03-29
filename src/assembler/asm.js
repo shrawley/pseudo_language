@@ -4,7 +4,7 @@ app.service('assembler', ['opcodes', function (opcodes) {
             // Use https://www.debuggex.com/
             // Matches: "label: INSTRUCTION (["')OPERAND1(]"'), (["')OPERAND2(]"')
             // GROUPS:      1       2               3                    7
-            var regex = /^[\t ]*(?:([.A-Za-z]\w*)[:])?(?:[\t ]*([A-Za-z]{2,4})(?:[\t ]+(\[(\w+((\+|-)\d+)?)\]|\".+?\"|\'.+?\'|[.A-Za-z0-9]\w*)(?:[\t ]*[,][\t ]*(\[(\w+((\+|-)\d+)?)\]|\".+?\"|\'.+?\'|[.A-Za-z0-9]\w*))?)?)?/;
+            var regex = /^[\t ]*(?:([.A-Za-z]\w*)[:])?(?:[\t ]*([A-Za-z]{2,4})(?:[\t ]+(\[(\w+((\+|-)\d+)?)\]|\".+?\"|\'.+?\'|[.A-Za-z0-9\+]\w*)(?:[\t ]*[,][\t ]*(\[(\w+((\+|-)\d+)?)\]|\".+?\"|\'.+?\'|[.A-Za-z0-9\+]\w*))?)?)?/;
 
             // Regex group indexes for operands
             var op1_group = 3;
@@ -146,6 +146,30 @@ app.service('assembler', ['opcodes', function (opcodes) {
                                         opCode = opcodes.CP_ADDRESS_TO_ADDRESS;
                                     else
                                         throw "CP does not support this operands";
+
+                                    code.push(opCode, p1.value, p2.value);
+                                    break;
+                                case 'CTP':
+                                    p1 = getValue(match[op1_group]);
+                                    p2 = getValue(match[op2_group]);
+
+                                    if (p1.type === "address" && p2.type === "number")
+                                        opCode = opcodes.CTP_NUMBER_TO_ADDRESS;
+                                    else if (p1.type === "address" && p2.type === "address")
+                                        opCode = opcodes.CTP_ADDRESS_TO_ADDRESS;
+                                    else
+                                        throw "CTP does not support this operands";
+
+                                    code.push(opCode, p1.value, p2.value);
+                                    break;
+                                case 'CFP':
+                                    p1 = getValue(match[op1_group]);
+                                    p2 = getValue(match[op2_group]);
+
+                                    if (p1.type === "address" && p2.type === "address")
+                                        opCode = opcodes.CFP_ADDRESS_TO_ADDRESS;
+                                    else
+                                        throw "CFP does not support this operands";
 
                                     code.push(opCode, p1.value, p2.value);
                                     break;

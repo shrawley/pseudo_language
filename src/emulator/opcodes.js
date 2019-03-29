@@ -15,7 +15,10 @@ app.service('opcodes', [function() {
         JC_ADDRESS: 12,
         JZ_ADDRESS: 13,
         PRINT_STRING: 14,
-        PRINT_DECIMAL: 15
+        PRINT_DECIMAL: 15,
+        CFP_ADDRESS_TO_ADDRESS: 16,
+        CTP_NUMBER_TO_ADDRESS: 17,
+        CTP_ADDRESS_TO_ADDRESS: 18
     };
 
     return opcodes;
