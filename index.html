@@ -55,8 +55,8 @@ Constant: Any number between 0..255 (8bit unsigned)
                         <h4>CP - Copy a value</h4>
                         <p>Copies a value from <i>src</i> to <i>dest</i>.</p>
                         <pre>
-CP address_dest, address_src
-CP address_dest, constant_src
+CP [address_dest], [address_src]
+CP [address_dest], constant_src
                         </pre>
                         <h4>DB - Variable</h4>
                         <p>Defines a variable. A variable can either be a single number, character or a string.</p>
@@ -89,34 +89,34 @@ CFP [dest], [pointer]
                         <b>CFP - Copy from a pointer</b>
                         <p>Copy a value from a poiter to the destination memory address.</p>
                         <pre>
-CFP address_dest, [pointer]
+CFP [address_dest], [pointer]
                         </pre>
                         <b>CTP - Copy to a pointer</b>
                         <p>Copy a value to a pointer.</p>
                         <pre>
-CTP [pointer], address_src
+CTP [pointer], [address_src]
 CTP [pointer], constant_src
                         </pre>
                         <h4>Math operations</h4>
                         <b>Addition and Subtraction</b>
                         <p>Adds two numbers together or subtract one number form another. This operations will modify the overflow and zero flag.</p>
                         <pre>
-ADD address_dest, constant
-ADD address_dest, address_src
-SUB address_dest, constant
-SUB address_dest, address_src
+ADD [address_dest], constant
+ADD [address_dest], [address_src]
+SUB [address_dest], constant
+SUB [address_dest], [address_src]
                         </pre>
                         <b>Increment and Decrement</b>
                         <p>Increments or decrements a register by one. This operations will modify the overflow and zero flag.</p>
                         <pre>
-INC address
-DEC address
+INC [address]
+DEC [address]
                         </pre>
                         <h4>CMP - Compare</h4>
                         <p>Compares two values by subtracting value at address2 or a constant from value stored at address1, the result is not stored, negative values will cause an overflow. Use this instruction before a conditional jump.</p>
                         <pre>
-CMP address1, address2
-CMP address, constant
+CMP [address1], [address2]
+CMP [address], constant
                         </pre>
                         <h4>Jumps</h4>
                         <b>JP - Unconditional jump</b>
