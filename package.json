@@ -10,5 +10,8 @@
     "grunt-contrib-jshint": "^2.0.0",
     "grunt-contrib-uglify": "^4.0.0",
     "grunt-contrib-watch": "^1.1.0"
+  },
+  "dependencies": {
+    "js-yaml": "^3.13.1"
   }
 }
