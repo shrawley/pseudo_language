@@ -109,6 +109,21 @@ JP address
 PRNS [address]
 PRND [address]
 </pre>
+
+<b>String Example:</b>
+<pre>
+char s[] = "Hello World!"
+printf("%s", s);
+</pre>
+
+<b>in pseudo language:</b>
+<pre>
+jp start
+s: db "Hello World!"    ;char s[] = "Hello World!";
+db 0       
+start: prns [s]         ;printf(“%d”, k);
+</pre>
+
 <b>Code Example:</b>
 <pre>
 char i = 100;
@@ -117,14 +132,12 @@ char k = 0;
 k = i - j;
 printf("%d", k);
 </pre>
-
-<b>in pseudo language:</b>
 <pre>
 jp start
 i: db 100       ;char i = 100;
 j: db 30        ;char j = 30;
 k: db 0         ;char k = 0;
-start: cp [k], [i]	;k = i;
+start: cp [k], [i]  ;k = i;
 sub [k], [j]	;k -= j;
 prnd [k]	;printf(“%d”, k);
 </pre>
