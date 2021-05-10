@@ -5,7 +5,7 @@
   "author": "Konstantin Zheludev",
   "license": "MIT",
   "devDependencies": {
-    "grunt": "^1.1.0",
+    "grunt": "^1.4.0",
     "grunt-contrib-concat": "^1.0.1",
     "grunt-contrib-jshint": "^2.1.0",
     "grunt-contrib-uglify": "^4.0.1",
@@ -13,6 +13,6 @@
   },
   "dependencies": {
     "js-yaml": "^3.14.0",
-    "lodash": "^4.17.15"
+    "lodash": "^4.17.21"
   }
 }
